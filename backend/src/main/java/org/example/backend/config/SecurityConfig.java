@@ -18,7 +18,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.util.List;
 
-
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig
@@ -64,7 +63,6 @@ public class SecurityConfig
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-
 
     @Bean
     public PasswordEncoder passwordEncoder()
