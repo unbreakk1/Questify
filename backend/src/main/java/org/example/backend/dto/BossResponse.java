@@ -2,7 +2,6 @@ package org.example.backend.dto;
 
 public class BossResponse
 {
-
     private String id;
     private String name;
     private int maxHealth;
