@@ -65,4 +65,10 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+
+  .card-title
+  {
+    text-shadow: 0 0 10px #9c27b0;
+  }
+
 }

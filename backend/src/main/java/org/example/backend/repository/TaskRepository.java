@@ -7,5 +7,6 @@ import java.util.List;
 
 public interface TaskRepository extends MongoRepository<Task, String>
 {
-    List<Task> findByUserIdAndDueDate(String userId, String dueDate); // Find tasks for a specific user and day
+    List<Task> findByUserIdAndDueDate(String userId, String dueDate);// Find tasks for a specific user and day
+    List<Task> findByUserId(String userId);
 }

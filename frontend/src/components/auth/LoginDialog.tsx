@@ -1,4 +1,5 @@
 import React, {useState} from 'react';
+import { useNavigate } from 'react-router';
 import {
     Dialog,
     DialogActions,
@@ -23,16 +24,18 @@ const LoginDialog: React.FC<LoginDialogProps> = ({open, onClose}) =>
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const navigate = useNavigate();
 
     const handleLogin = async () =>
     {
         setError(''); // Clear error state
         try
         {
-            const token = await loginUser(username, password);
+            const token = await loginUser(username, password); // Call loginUser from Auth.tsx
             localStorage.setItem('token', token); // Save JWT in localStorage
-            alert('Login successful!');
+            navigate('/dashboard'); // Redirect to dashboard on success
             onClose();
+
         }
         catch (err)
         {

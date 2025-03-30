@@ -14,20 +14,23 @@ public class Boss
     private int currentHealth; // Current remaining health
     private int levelRequirement; // Minimum level to fight this boss
     private boolean defeated; // If the boss has been defeated
-    private Rewards rewards; // XP and in-game items received upon defeat
+    private Rewards rewards;// XP and in-game items received upon defeat
+    private boolean inProgress;
+    private boolean rare;
+
 
     // Embedded Rewards class
     public static class Rewards
     {
+
         private int xp; // Experience points
         private String badge; // Badge or reward name
-
         // Getters and Setters
+
         public int getXp()
         {
             return xp;
         }
-
         public void setXp(int xp)
         {
             this.xp = xp;
@@ -42,9 +45,30 @@ public class Boss
         {
             this.badge = badge;
         }
+
+    }
+    // Getters and Setters for main Boss fields
+    public boolean isRare()
+    {
+        return rare;
     }
 
-    // Getters and Setters for main Boss fields
+    public void setRare(boolean rare)
+    {
+        this.rare = rare;
+    }
+
+
+    public boolean isInProgress()
+    {
+        return inProgress;
+    }
+
+    public void setInProgress(boolean inProgress)
+    {
+        this.inProgress = inProgress;
+    }
+
     public String getId()
     {
         return id;

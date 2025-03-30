@@ -34,13 +34,18 @@ public class TaskService
     }
 
     // Retrieve all tasks for a specific user on a given day
-    public List<TaskResponse> getTasksForDate(String userId, String date)
+    public List<TaskResponse> getAllTasksForUser(String userId)
     {
-        List<Task> tasks = taskRepository.findByUserIdAndDueDate(userId, date);
+        // Fetch all tasks for the given userId
+        List<Task> tasks = taskRepository.findByUserId(userId);
+
+        System.out.println("Fetched " + tasks.size() + " tasks for userId: " + userId); // Debug log
+
         return tasks.stream()
                 .map(task -> new TaskResponse(task.getId(), task.getTitle(), task.isCompleted(), task.getDueDate()))
                 .collect(Collectors.toList());
     }
+
 
     // Mark a task as completed
     public TaskResponse completeTask(String userId, String taskId)

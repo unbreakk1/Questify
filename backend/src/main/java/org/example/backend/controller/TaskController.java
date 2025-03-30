@@ -31,13 +31,16 @@ public class TaskController
     }
 
     @GetMapping
-    public ResponseEntity<List<TaskResponse>> getTasksForToday(Authentication authentication)
+    public ResponseEntity<List<TaskResponse>> getAllTasks(Authentication authentication)
     {
-        String userId = authentication.getName();
-        String today = LocalDate.now().toString(); // Current date in YYYY-MM-DD format
-        List<TaskResponse> tasks = taskService.getTasksForDate(userId, today);
+        String userId = authentication.getName(); // Extract userId from the authentication context
+        System.out.println("Authenticated userId: " + userId); // Debug log
+
+        // Retrieve all tasks for the user, ignoring the date
+        List<TaskResponse> tasks = taskService.getAllTasksForUser(userId);
         return ResponseEntity.ok(tasks);
     }
+
 
     @PutMapping("/{taskId}/complete")
     public ResponseEntity<TaskResponse> completeTask(Authentication authentication,

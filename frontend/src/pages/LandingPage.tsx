@@ -9,8 +9,8 @@ import {
     ThemeProvider,
     createTheme,
 } from '@mui/material';
-import LoginDialog from './components/auth/LoginDialog';
-import RegisterDialog from './components/auth/RegisterDialog';
+import LoginDialog from '../components/auth/LoginDialog.tsx';
+import RegisterDialog from '../components/auth/RegisterDialog.tsx';
 
 const darkTheme = createTheme({
     palette: {
