@@ -6,7 +6,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document("tasks") // MongoDB collection name
 public class Task
 {
-
     @Id
     private String id;
     private String userId; // Link to the user who owns the task

@@ -34,34 +34,32 @@ public class SecurityConfig
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception
-    {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable()) // Disable CSRF for non-browser API clients
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**", "/", "/index.html", "/assets/**").permitAll()
-                        .anyRequest().authenticated()) // Allow public and private endpoints
+                        .anyRequest().authenticated()) // Secure endpoints except for permitted ones
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Attach CORS config
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Explicitly add CORS
                 .build();
+
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource()
-    {
-        // Define global CORS settings
+    public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000")); // Frontend address
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")); // HTTP methods
-        configuration.setAllowedHeaders(List.of("*")); // Allow all request headers
-        configuration.setAllowCredentials(true); // Support credentials (e.g., cookies, authorization)
+        configuration.addAllowedOriginPattern("*"); // Allow all origins (wildcard)
+        configuration.addAllowedHeader("*");       // Allow all headers
+        configuration.addAllowedMethod("*");       // Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
+        configuration.setAllowCredentials(true);   // Allow credentials (if needed)
 
-        // Apply the CORS settings to all endpoints
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+        source.registerCorsConfiguration("/**", configuration); // Apply to all endpoints
         return source;
+
     }
 
     @Bean
