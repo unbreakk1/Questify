@@ -1,5 +1,7 @@
 package org.example.backend.controller;
 
+import org.example.backend.dto.AuthenticationRequest;
+import org.example.backend.dto.AuthenticationResponse;
 import org.example.backend.exceptions.UserAlreadyExistsException;
 import org.example.backend.service.UserService;
 import org.example.backend.util.JwtUtil;
@@ -8,12 +10,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
@@ -32,33 +30,35 @@ public class AuthController
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestParam String username, @RequestParam String password)
+    public ResponseEntity<AuthenticationResponse> login(@RequestBody AuthenticationRequest request)
     {
         try
         {
-            // Authenticate user credentials
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(username, password)
+            // Authenticate user
+            Authentication auth = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
             );
 
-            // Generate token upon successful authentication
-            String token = jwtUtil.generateToken(username);
-            return ResponseEntity.ok().body(Map.of("token", token));
-        } catch (AuthenticationException e)
+            // Generate JWT token
+            String token = jwtUtil.generateToken(auth.getName());
+            return ResponseEntity.ok(new AuthenticationResponse(token));
+
+        }
+        catch (AuthenticationException e)
         {
-            return ResponseEntity.status(401).body("Invalid credentials");
+            return ResponseEntity.status(401).body(new AuthenticationResponse("Invalid credentials"));
         }
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestParam String username, @RequestParam String password)
+    public ResponseEntity<String> register(@RequestBody AuthenticationRequest request)
     {
         try
         {
-            // Register new user
-            userService.registerUser(username, password);
-            return ResponseEntity.ok().body("User registered successfully");
-        } catch (UserAlreadyExistsException e)
+            userService.registerUser(request.getUsername(), request.getPassword());
+            return ResponseEntity.ok("User registered successfully");
+        }
+        catch (UserAlreadyExistsException e)
         {
             return ResponseEntity.status(400).body(e.getMessage());
         }
