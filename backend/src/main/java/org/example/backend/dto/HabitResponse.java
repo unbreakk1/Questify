@@ -1,5 +1,6 @@
 package org.example.backend.dto;
 
+import org.example.backend.entity.Habit;
 
 public class HabitResponse
 {
@@ -19,6 +20,15 @@ public class HabitResponse
         this.difficulty = difficulty;
         this.streak = streak;
     }
+
+    public HabitResponse(Habit habit) {
+        this.id = habit.getId();
+        this.title = habit.getTitle();
+        this.frequency = habit.getFrequency();
+        this.difficulty = habit.getDifficulty();
+        this.streak = habit.getStreak();
+    }
+
 
     public String getId()
     {

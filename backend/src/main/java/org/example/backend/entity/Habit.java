@@ -3,6 +3,7 @@ package org.example.backend.entity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Document("habits")
@@ -11,12 +12,13 @@ public class Habit
 
     @Id
     private String id;
-    private String userId; // Link to the user
+    private String userId;
     private String title;
-    private String frequency; // DAILY, WEEKLY, etc.
-    private String difficulty; // EASY, MEDIUM, HARD
-    private int streak; // Current streak
-    private List<Progress> progress; // Track progress over time
+    private String frequency = "DAILY"; // Default to DAILY
+    private String difficulty = "EASY"; // Default to EASY
+    private int streak = 0;
+    private List<Progress> progress = new ArrayList<>(); // Initialize progress as an empty list
+   // Track progress over time
 
     // Inner Progress Class
     public static class Progress

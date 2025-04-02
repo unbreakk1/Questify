@@ -22,6 +22,8 @@ import { getAllTasks, createTask } from '../api/TasksAPI';
 import { getAllBosses } from '../api/BossesAPI';
 import { useNavigate } from 'react-router';
 import axios from 'axios';
+import {completeHabit, getAllHabits, Habit} from "../api/HabitsAPI.tsx";
+import HabitCard from "../components/habits/HabitCard.tsx";
 
 // Task interface
 interface Task {
@@ -48,6 +50,7 @@ const DashboardPage: React.FC = () => {
     const [openDialog, setOpenDialog] = useState(false); // Dialog state
     const [newTask, setNewTask] = useState({ title: '', dueDate: '' }); // New task data
     const [completedTask, setCompletedTask] = useState<string | null>(null); // Task being animated
+    const [habits, setHabits] = useState<Habit[]>([]); // Habit list
     const navigate = useNavigate();
 
     // Fetch tasks and boss data
@@ -56,6 +59,13 @@ const DashboardPage: React.FC = () => {
             try {
                 const tasksData = await getAllTasks();
                 setTasks(tasksData);
+
+                // Fetch habits
+                const habitsData = await getAllHabits();
+                console.log('Fetched Habits:', habitsData);
+
+                setHabits(habitsData);
+
 
                 const bossesData = await getAllBosses();
                 const activeBoss = bossesData.find((boss) => !boss.defeated);
@@ -130,6 +140,20 @@ const DashboardPage: React.FC = () => {
             console.error('Error while completing task or damaging boss:', error);
         }
     };
+
+    const handleHabitCompletion = async (habitId: string) => {
+        try {
+            const updatedHabit = await completeHabit(habitId);
+            setHabits((prevHabits) =>
+                prevHabits.map((habit) =>
+                    habit.id === habitId ? updatedHabit : habit
+                )
+            );
+        } catch (error) {
+            console.error('Error completing habit:', error);
+        }
+    };
+
 
     // Handle user logout
     const handleLogout = () => {
@@ -209,6 +233,18 @@ const DashboardPage: React.FC = () => {
                         </Card>
                     </Slide>
                 </Grid>
+                <Box sx={{ marginTop: '32px' }}>
+                    <Typography variant="h5" gutterBottom>
+                        Your Habits
+                    </Typography>
+                    <Grid container spacing={3}>
+                        {habits.map((habit) => (
+                            <Grid item xs={12} sm={6} md={4} key={habit.id}>
+                                <HabitCard habit={habit} onComplete={handleHabitCompletion} />
+                            </Grid>
+                        ))}
+                    </Grid>
+                </Box>
 
                 {/* Boss Section */}
                 <Grid xs={12} md={6}>
