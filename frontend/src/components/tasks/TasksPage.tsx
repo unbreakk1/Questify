@@ -1,21 +1,10 @@
 import React, {useState, useEffect} from 'react';
-import {getAllTasks} from '../../api/TasksAPI';
-import {Box, Button, Typography, Grid, GridProps} from '@mui/material';
+import {getAllTasks, completeTask, Task} from '../../api/TasksAPI'; // Import completeTask API function
 import TaskCard from './TaskCard';
-
-// Define the structure of a Task object
-interface Task
-{
-    id: string;
-    title: string;
-    description: string;
-    dueDate: string;
-    completed: boolean;
-}
 
 const TasksPage: React.FC = () =>
 {
-    const [tasks, setTasks] = useState<Task[]>([]); // Explicitly typed state
+    const [tasks, setTasks] = useState<Task[]>([]);
 
     useEffect(() =>
     {
@@ -24,7 +13,7 @@ const TasksPage: React.FC = () =>
             try
             {
                 const data = await getAllTasks();
-                setTasks(data); // TypeScript infers `data` matches Task[]
+                setTasks(data);
             } catch (error)
             {
                 console.error('Failed to fetch tasks:', error);
@@ -33,41 +22,35 @@ const TasksPage: React.FC = () =>
         fetchTasks();
     }, []);
 
+    const handleCompleteTask = async (taskId: string) =>
+    {
+        try
+        {
+            // Call the `completeTask` API to mark the task as complete
+            await completeTask(taskId);
+
+            // Refresh the task list to reflect the updated status
+            const updatedTasks = await getAllTasks();
+            setTasks(updatedTasks);
+        } catch (error)
+        {
+            console.error(`Failed to complete task with ID ${taskId}:`, error);
+        }
+    };
+
+
     return (
-        <Box sx={{padding: '16px'}}>
-            <Typography variant="h4" gutterBottom>
-                Your Tasks
-            </Typography>
-
-            <Grid container spacing={2}>
-                {tasks.map((task: Task) => (
-                    <Grid
-                        item
-                        xs={12}
-                        sm={6}
-                        md={4}
-                        key={task.id}
-                        component="div" // Explicitly set the component prop
-                        {...({} as GridProps)} // Ensure TypeScript resolves the `item` prop
-                    >
-                        <TaskCard task={task}/>
-                    </Grid>
-                ))}
-            </Grid>
-
-            <Button
-                variant="contained"
-                color="primary"
-                sx={{mt: 2}}
-                onClick={() =>
-                {
-                    // Logic to open "Add Task" dialog (placeholder)
-                }}
-            >
-                Add New Task
-            </Button>
-        </Box>
+        <div>
+            {tasks.map((task) => (
+                <TaskCard
+                    key={task.id}
+                    task={task}
+                    onComplete={() => handleCompleteTask(task.id)} // Pass task ID to the function
+                />
+            ))}
+        </div>
     );
 };
 
 export default TasksPage;
+

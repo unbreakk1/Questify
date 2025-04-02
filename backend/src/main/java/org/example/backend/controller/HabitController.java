@@ -36,18 +36,19 @@ public class HabitController
     }
 
 
-    @PostMapping
-    public ResponseEntity<HabitResponse> createHabit(Authentication authentication, @RequestBody HabitCreationRequest request)
-    {
-        String userId = authentication.getName();
-        Habit habit = habitService.createHabit(userId, request); // Get Habit entity
-        HabitResponse response = new HabitResponse(habit); // Convert entity to DTO
-        return ResponseEntity.ok(response); // Return DTO
-    }
+    //  @PostMapping
+    //  public ResponseEntity<HabitResponse> createHabit(Authentication authentication, @RequestBody HabitCreationRequest request)
+    //  {
+    //      String userId = authentication.getName();
+    //      Habit habit = habitService.createHabit(userId, request); // Get Habit entity
+    //      HabitResponse response = new HabitResponse(habit); // Convert entity to DTO
+    //      return ResponseEntity.ok(response); // Return DTO
+    //  }
 
     @PutMapping("/{habitId}/complete")
     public ResponseEntity<HabitResponse> completeHabit(Authentication authentication,
-                                                       @PathVariable String habitId) {
+                                                       @PathVariable String habitId)
+    {
         // Extract the authenticated user ID
         String userId = authentication.getName();
 
@@ -60,5 +61,23 @@ public class HabitController
         // Return the response
         return ResponseEntity.ok(response);
     }
+
+    @PutMapping("/{habitId}/reset")
+    public ResponseEntity<HabitResponse> resetHabit(
+            Authentication authentication,
+            @PathVariable String habitId
+    )
+    {
+        // Extract the userId from the authentication context
+        String userId = authentication.getName();
+
+        // Call the service to reset the habit
+        Habit resetHabit = habitService.resetHabit(userId, habitId);
+
+        // Convert and return the reset habit as a DTO
+        HabitResponse response = new HabitResponse(resetHabit);
+        return ResponseEntity.ok(response);
+    }
+
 
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
     Box,
     Grid,
@@ -10,7 +10,6 @@ import {
     AppBar,
     Toolbar,
     Checkbox,
-    FormControlLabel,
     Dialog,
     DialogContent,
     DialogActions,
@@ -18,23 +17,26 @@ import {
     Slide,
     Grow,
 } from '@mui/material';
-import { getAllTasks, createTask } from '../api/TasksAPI';
-import { getAllBosses } from '../api/BossesAPI';
-import { useNavigate } from 'react-router';
+import {getAllTasks, createTask} from '../api/TasksAPI';
+import {getAllBosses} from '../api/BossesAPI';
+import {useNavigate} from 'react-router';
 import axios from 'axios';
-import {completeHabit, getAllHabits, Habit} from "../api/HabitsAPI.tsx";
+import {completeHabit, getAllHabits, Habit, resetHabit} from "../api/HabitsAPI.tsx";
 import HabitCard from "../components/habits/HabitCard.tsx";
 
 // Task interface
-interface Task {
+interface Task
+{
     id: string;
     title: string;
     dueDate: string;
     completed: boolean;
+    recentlyCompleted?: boolean; // Used to trigger animation
 }
 
 // Boss interface
-interface Boss {
+interface Boss
+{
     id: string;
     name: string;
     currentHealth: number;
@@ -42,21 +44,24 @@ interface Boss {
     defeated: boolean;
 }
 
-const DashboardPage: React.FC = () => {
+const DashboardPage: React.FC = () =>
+{
     const [tasks, setTasks] = useState<Task[]>([]); // Task list
     const [currentBoss, setCurrentBoss] = useState<Boss | null>(null); // Active boss
     const [animationsLoaded, setAnimationsLoaded] = useState<boolean>(false); // Animation loaded state
     const [username] = useState<string>('Hero'); // Default username
     const [openDialog, setOpenDialog] = useState(false); // Dialog state
-    const [newTask, setNewTask] = useState({ title: '', dueDate: '' }); // New task data
-    const [completedTask, setCompletedTask] = useState<string | null>(null); // Task being animated
+    const [newTask, setNewTask] = useState({title: '', dueDate: ''}); // New task data
     const [habits, setHabits] = useState<Habit[]>([]); // Habit list
     const navigate = useNavigate();
 
     // Fetch tasks and boss data
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
+    useEffect(() =>
+    {
+        const fetchData = async () =>
+        {
+            try
+            {
                 const tasksData = await getAllTasks();
                 setTasks(tasksData);
 
@@ -66,112 +71,158 @@ const DashboardPage: React.FC = () => {
 
                 setHabits(habitsData);
 
-
+                // Fetch boss data
                 const bossesData = await getAllBosses();
                 const activeBoss = bossesData.find((boss) => !boss.defeated);
                 setCurrentBoss(activeBoss || null);
-            } catch (error) {
+            } catch (error)
+            {
                 console.error('Error fetching data:', error);
             }
 
             setAnimationsLoaded(true); // Enable animations on load
         };
 
+        // Call the initial fetch
         fetchData();
+
+        // Call resetTasks to reset any completed tasks on load
+        resetTasks();
+
+        // Set up a daily reset interval
+        const resetInterval = setInterval(() =>
+        {
+            resetTasks();
+        }, 86400000); // Every 24 hours
+
+        // Cleanup interval on component unmount
+        return () => clearInterval(resetInterval);
     }, []);
 
+
     // Function to handle adding a new task
-    const handleAddTask = async () => {
-        try {
+    const resetTasks = () =>
+    {
+        const today = new Date().toISOString().split('T')[0];
+        setTasks((prevTasks) =>
+            prevTasks.map((task) => ({
+                ...task,
+                completed: task.completed && task.dueDate === today ? false : task.completed,
+            }))
+        );
+    };
+
+    const handleAddTask = async () =>
+    {
+        try
+        {
             const addedTask = await createTask(newTask); // Add new task via API
             setTasks([...tasks, addedTask]); // Update task list locally
             setOpenDialog(false); // Close dialog
-            setNewTask({ title: '', dueDate: '' }); // Reset input
-        } catch (error) {
+            setNewTask({title: '', dueDate: ''}); // Reset input
+        } catch (error)
+        {
             console.error('Error creating task:', error);
         }
     };
 
     // Function to handle task completion and animation
-    const handleTaskCompletion = async (taskId: string, completed: boolean) => {
-        try {
+    const handleTaskCompletion = async (taskId: string, completed: boolean) =>
+    {
+        try
+        {
             console.log(`Completing task: ${taskId}, completed: ${completed}`);
 
             // Update task as completed in the backend
             await axios.put(
                 `http://localhost:8080/api/tasks/${taskId}/complete`,
-                { completed },
+                {completed},
                 {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                    headers: {Authorization: `Bearer ${localStorage.getItem('token')}`},
                 }
             );
 
-            // Handle task animation and removal
-            if (completed) {
-                setCompletedTask(taskId); // Trigger animation
-                setTimeout(() => {
-                    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId)); // Remove task
-                    setCompletedTask(null); // Reset animation state
-                }, 500); // Match animation duration
-            }
-
-            // Trigger boss health update
-            if (completed && currentBoss) {
-                const damageResponse = await axios.put(
-                    `http://localhost:8080/api/boss/attack`,
-                    { damage: 10 }, // Arbitrary damage value
-                    {
-                        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-                    }
+            if (completed)
+            {
+                // Trigger animation by marking the task as recently completed
+                setTasks((prevTasks) =>
+                    prevTasks.map((task) =>
+                        task.id === taskId ? {...task, recentlyCompleted: true} : task
+                    )
                 );
 
-                // Update boss state
-                setCurrentBoss((boss) =>
-                    boss
-                        ? {
-                            ...boss,
-                            currentHealth: damageResponse.data.currentHealth,
-                            defeated: damageResponse.data.defeated,
-                        }
-                        : null
+                // Wait for animation to finish, then mark the task as completed
+                setTimeout(() =>
+                {
+                    setTasks((prevTasks) =>
+                        prevTasks.map((task) =>
+                            task.id === taskId
+                                ? {...task, completed: true, recentlyCompleted: false}
+                                : task
+                        )
+                    );
+                }, 500); // Match the animation duration
+            } else
+            {
+                // Unmark the task if it's undone
+                setTasks((prevTasks) =>
+                    prevTasks.map((task) => (task.id === taskId ? {...task, completed: false} : task))
                 );
             }
-        } catch (error) {
-            console.error('Error while completing task or damaging boss:', error);
+        } catch (error)
+        {
+            console.error(`Failed to complete task with ID ${taskId}:`, error);
         }
     };
 
-    const handleHabitCompletion = async (habitId: string) => {
-        try {
-            const updatedHabit = await completeHabit(habitId);
-            setHabits((prevHabits) =>
-                prevHabits.map((habit) =>
-                    habit.id === habitId ? updatedHabit : habit
-                )
-            );
-        } catch (error) {
-            console.error('Error completing habit:', error);
+
+    const handleCompleteHabit = async (habitId: string) =>
+    {
+        try
+        {
+            await completeHabit(habitId); // Mark habit as completed
+            const updatedHabits = await getAllHabits(); // Re-fetch updated habits
+            setHabits(updatedHabits); // Update local state
+        } catch (error)
+        {
+            console.error(`Failed to complete habit with ID ${habitId}:`, error);
+        }
+    };
+
+    const handleResetHabit = async (habitId: string) =>
+    {
+        try
+        {
+            await resetHabit(habitId); // Call the API to reset the habit
+
+            // Refresh the habits list to reflect the reset state
+            const updatedHabits = await getAllHabits();
+            setHabits(updatedHabits);
+        } catch (error)
+        {
+            console.error(`Failed to reset habit with ID ${habitId}:`, error);
         }
     };
 
 
     // Handle user logout
-    const handleLogout = () => {
+    const handleLogout = () =>
+    {
         localStorage.removeItem('token');
         navigate('/');
     };
 
     // Main render
     return (
-        <Box sx={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column'}}>
             {/* AppBar */}
             <Grow in={animationsLoaded}>
                 <AppBar position="static">
                     <Toolbar>
-                        <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                        <Typography variant="h6" sx={{flexGrow: 1}}>
                             Questify
                         </Typography>
-                        <Typography variant="body1" sx={{ marginRight: 2 }}>
+                        <Typography variant="body1" sx={{marginRight: 2}}>
                             Welcome, {username}
                         </Typography>
                         <Button color="inherit" onClick={handleLogout}>
@@ -183,7 +234,7 @@ const DashboardPage: React.FC = () => {
 
             {/* Dashboard Title */}
             <Grow in={animationsLoaded}>
-                <Box sx={{ py: 2, textAlign: 'center' }}>
+                <Box sx={{py: 2, textAlign: 'center'}}>
                     <Typography variant="h3" color="primary">
                         Your Epic Quests
                     </Typography>
@@ -191,60 +242,67 @@ const DashboardPage: React.FC = () => {
             </Grow>
 
             {/* Main Content */}
-            <Grid container spacing={3} sx={{ padding: 2, flexGrow: 1 }}>
+            <Grid container spacing={3} sx={{padding: 2, flexGrow: 1}}>
                 {/* Tasks Section */}
-                <Grid xs={12} md={6}>
-                    <Slide in={animationsLoaded} direction="left">
-                        <Card>
-                            <CardContent>
-                                <Typography variant="h4">Tasks</Typography>
-                                {tasks.map((task) => (
-                                    <Slide
-                                        key={task.id}
-                                        direction="left"
-                                        in={!(completedTask === task.id)} // Animate out if task is being removed
-                                        timeout={{ enter: 300, exit: 500 }}
-                                        unmountOnExit
-                                    >
-                                        <Box display="flex" alignItems="center" my={2}>
-                                            <FormControlLabel
-                                                control={
-                                                    <Checkbox
-                                                        checked={task.completed}
-                                                        onChange={(e) =>
-                                                            handleTaskCompletion(task.id, e.target.checked)
-                                                        }
-                                                        color="primary"
-                                                    />
-                                                }
-                                                label={task.title}
-                                            />
-                                        </Box>
-                                    </Slide>
-                                ))}
-                                <Button
-                                    variant="contained"
-                                    onClick={() => setOpenDialog(true)}
-                                    sx={{ marginTop: 2 }}
+                <Box display="flex" flexDirection="row" gap={4} justifyContent="space-between">
+                    {/* Tasks Section */}
+                    <Box flex={1} display="flex" flexDirection="column" gap={2}>
+                        <Typography variant="h5">Tasks</Typography>
+                        {tasks.map((task) => (
+                            <Grow
+                                in={!task.recentlyCompleted}
+                                timeout={500}
+                                mountOnEnter
+                                unmountOnExit
+                                key={task.id}
+                            >
+                                <Card
+                                    style={{
+                                        opacity: task.completed ? 0.5 : 1,
+                                        transition: 'transform 0.5s ease',
+                                    }}
                                 >
-                                    Add Task
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    </Slide>
-                </Grid>
-                <Box sx={{ marginTop: '32px' }}>
-                    <Typography variant="h5" gutterBottom>
-                        Your Habits
-                    </Typography>
-                    <Grid container spacing={3}>
-                        {habits.map((habit) => (
-                            <Grid item xs={12} sm={6} md={4} key={habit.id}>
-                                <HabitCard habit={habit} onComplete={handleHabitCompletion} />
-                            </Grid>
+                                    <CardContent>
+                                        <Typography
+                                            variant="h6"
+                                            style={{
+                                                textDecoration: task.completed ? 'line-through' : 'none',
+                                            }}
+                                        >
+                                            {task.title}
+                                        </Typography>
+                                        <Typography variant="body2" color="textSecondary">
+                                            Due Date: {task.dueDate}
+                                        </Typography>
+                                        <Checkbox
+                                            checked={task.completed}
+                                            onChange={() => handleTaskCompletion(task.id, !task.completed)}
+                                            disabled={task.completed}
+                                        />
+                                        <Typography variant="body2">
+                                            {task.completed ? 'Completed' : 'Pending'}
+                                        </Typography>
+                                    </CardContent>
+                                </Card>
+                            </Grow>
                         ))}
-                    </Grid>
+                    </Box>
+
+                    {/* Habits Section */}
+                    <Box>
+                        {habits.map((habit) => (
+                            <HabitCard
+                                key={habit.id}
+                                habit={habit}
+                                onComplete={handleCompleteHabit} // Existing completion handler
+                                onReset={handleResetHabit}      // New reset handler
+                            />
+                        ))}
+                    </Box>
+
+
                 </Box>
+
 
                 {/* Boss Section */}
                 <Grid xs={12} md={6}>
@@ -258,7 +316,7 @@ const DashboardPage: React.FC = () => {
                                         <LinearProgress
                                             variant="determinate"
                                             value={(currentBoss.currentHealth / currentBoss.maxHealth) * 100}
-                                            sx={{ marginY: 2 }}
+                                            sx={{marginY: 2}}
                                         />
                                         <Typography>
                                             HP: {currentBoss.currentHealth}/{currentBoss.maxHealth}
@@ -281,16 +339,16 @@ const DashboardPage: React.FC = () => {
                         label="Task Title"
                         fullWidth
                         value={newTask.title}
-                        onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                        onChange={(e) => setNewTask({...newTask, title: e.target.value})}
                     />
                     <TextField
                         margin="dense"
                         label="Due Date"
                         type="date"
                         fullWidth
-                        InputLabelProps={{ shrink: true }}
+                        InputLabelProps={{shrink: true}}
                         value={newTask.dueDate}
-                        onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
+                        onChange={(e) => setNewTask({...newTask, dueDate: e.target.value})}
                     />
                 </DialogContent>
                 <DialogActions>

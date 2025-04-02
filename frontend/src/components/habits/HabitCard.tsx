@@ -1,40 +1,44 @@
-import React from 'react';
-import { Card, CardContent, Typography, Button } from '@mui/material';
-import { Habit } from '../../api/HabitsAPI';
+import { Button, Card, CardContent, Typography, Checkbox } from '@mui/material';
+import {Habit} from "../../api/HabitsAPI.tsx";
 
 interface HabitCardProps {
     habit: Habit;
     onComplete: (habitId: string) => void;
+    onReset: (habitId: string) => void; // Add reset handler
 }
 
-const HabitCard: React.FC<HabitCardProps> = ({ habit, onComplete }) => {
+const HabitCard: React.FC<HabitCardProps> = ({ habit, onComplete, onReset }) => {
     const {
         title,
-        frequency = 'DAILY',
-        difficulty = 'EASY',
+        frequency,
+        difficulty,
         streak = 0,
-        progress = [],
+        lastCompletedDate,
     } = habit;
 
-    // Check if the habit was completed today
-    const isCompletedToday = progress.some(
-        (p) => p.date === new Date().toISOString().split('T')[0] && p.completed
-    );
+    const today = new Date().toISOString().split('T')[0];
+    const isCompletedToday = lastCompletedDate === today;
 
     return (
-        <Card sx={{ margin: '16px', width: '100%' }}>
+        <Card sx={{ margin: '8px 0', padding: '16px', width: '100%' }}>
             <CardContent>
                 <Typography variant="h6">{title}</Typography>
                 <Typography variant="body2">Frequency: {frequency}</Typography>
                 <Typography variant="body2">Difficulty: {difficulty}</Typography>
-                <Typography variant="body2">Streak: {streak}</Typography>
+                <Typography variant="body2">Streak: {streak} days</Typography>
+                <Checkbox
+                    checked={isCompletedToday}
+                    onChange={() => onComplete(habit.id)} // Mark as complete
+                    disabled={isCompletedToday}         // Disable if already completed
+                    inputProps={{ 'aria-label': `Mark ${title} as complete` }}
+                />
                 <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => onComplete(habit.id)}
-                    disabled={isCompletedToday}
+                    variant="outlined"
+                    color="secondary"
+                    onClick={() => onReset(habit.id)}  // Reset completion
+                    sx={{ marginLeft: '8px' }}
                 >
-                    {isCompletedToday ? 'Completed Today' : 'Complete'}
+                    Reset
                 </Button>
             </CardContent>
         </Card>

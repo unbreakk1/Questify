@@ -3,120 +3,81 @@ package org.example.backend.entity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Document("habits")
-public class Habit
-{
+public class Habit {
 
     @Id
     private String id;
-    private String userId;
-    private String title;
-    private String frequency = "DAILY"; // Default to DAILY
-    private String difficulty = "EASY"; // Default to EASY
-    private int streak = 0;
-    private List<Progress> progress = new ArrayList<>(); // Initialize progress as an empty list
-   // Track progress over time
+    private String userId;         // Link to the user who owns this habit
+    private String title;          // Title of the habit
+    private String frequency;      // DAILY, WEEKLY (Dynamic but simple string)
+    private String difficulty;     // EASY, MEDIUM, HARD
+    private int streak = 0;        // Track streak count
+    private boolean completed;     // Whether the habit is completed today
+    private String lastCompletedDate; // Date the habit was last completed (ISO format)
 
-    // Inner Progress Class
-    public static class Progress
-    {
-        private String date;
-        private boolean completed;
-
-        // Getters and Setters
-        public String getDate()
-        {
-            return date;
-        }
-
-        public void setDate(String date)
-        {
-            this.date = date;
-        }
-
-        public boolean isCompleted()
-        {
-            return completed;
-        }
-
-        public void setCompleted(boolean completed)
-        {
-            this.completed = completed;
-        }
-    }
-
-    // Getters and Setters for main fields
-    public String getId()
-    {
+    // Getters & Setters
+    public String getId() {
         return id;
     }
 
-    public void setId(String id)
-    {
+    public void setId(String id) {
         this.id = id;
     }
 
-    public String getUserId()
-    {
+    public String getUserId() {
         return userId;
     }
 
-    public void setUserId(String userId)
-    {
+    public void setUserId(String userId) {
         this.userId = userId;
     }
 
-    public String getTitle()
-    {
+    public String getTitle() {
         return title;
     }
 
-    public void setTitle(String title)
-    {
+    public void setTitle(String title) {
         this.title = title;
     }
 
-    public String getFrequency()
-    {
+    public String getFrequency() {
         return frequency;
     }
 
-    public void setFrequency(String frequency)
-    {
+    public void setFrequency(String frequency) {
         this.frequency = frequency;
     }
 
-    public String getDifficulty()
-    {
+    public String getDifficulty() {
         return difficulty;
     }
 
-    public void setDifficulty(String difficulty)
-    {
+    public void setDifficulty(String difficulty) {
         this.difficulty = difficulty;
     }
 
-    public int getStreak()
-    {
+    public int getStreak() {
         return streak;
     }
 
-    public void setStreak(int streak)
-    {
+    public void setStreak(int streak) {
         this.streak = streak;
     }
 
-    public List<Progress> getProgress()
-    {
-        return progress;
+    public boolean isCompleted() {
+        return completed;
     }
 
-    public void setProgress(List<Progress> progress)
-    {
-        this.progress = progress;
+    public void setCompleted(boolean completed) {
+        this.completed = completed;
+    }
+
+    public String getLastCompletedDate() {
+        return lastCompletedDate;
+    }
+
+    public void setLastCompletedDate(String lastCompletedDate) {
+        this.lastCompletedDate = lastCompletedDate;
     }
 }
-

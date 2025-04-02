@@ -36,10 +36,20 @@ public class TaskService
     // Retrieve all tasks for a specific user on a given day
     public List<TaskResponse> getAllTasksForUser(String userId)
     {
-        // Fetch all tasks for the given userId
         List<Task> tasks = taskRepository.findByUserId(userId);
 
-        System.out.println("Fetched " + tasks.size() + " tasks for userId: " + userId); // Debug log
+        LocalDate today = LocalDate.now(); // Today’s date
+
+        // Reset tasks that are past the cooldown period (e.g., not completed today)
+        tasks.forEach(task ->
+        {
+            if (task.isCompleted() && !today.toString().equals(task.getLastCompletedDate()))
+            {
+                task.setCompleted(false); // Reset completed status
+                task.setLastCompletedDate(null); // Clear lastCompletedDate if task is reset
+                taskRepository.save(task); // Save updated task (optional for persistence)
+            }
+        });
 
         return tasks.stream()
                 .map(task -> new TaskResponse(task.getId(), task.getTitle(), task.isCompleted(), task.getDueDate()))
@@ -58,8 +68,19 @@ public class TaskService
             throw new IllegalArgumentException("Task does not belong to the user");
         }
 
+        LocalDate today = LocalDate.now();
+
+        // Check if the task is already completed today
+        if (today.toString().equals(task.getLastCompletedDate()))
+        {
+            throw new IllegalArgumentException("Task has already been completed today");
+        }
+
         task.setCompleted(true);
+        task.setLastCompletedDate(today.toString()); // Track the completion date
         Task updatedTask = taskRepository.save(task);
+
         return new TaskResponse(updatedTask.getId(), updatedTask.getTitle(), updatedTask.isCompleted(), updatedTask.getDueDate());
     }
+
 }

@@ -12,6 +12,8 @@ public class Task
     private String title; // Task title
     private boolean completed; // Task completion status (e.g., true or false)
     private String dueDate; // YYYY-MM-DD for tracking daily tasks
+    private String lastCompletedDate;
+
 
     // Getters and Setters
     public String getId()
@@ -62,5 +64,15 @@ public class Task
     public void setDueDate(String dueDate)
     {
         this.dueDate = dueDate;
+    }
+
+    public String getLastCompletedDate()
+    {
+        return lastCompletedDate;
+    }
+
+    public String setLastCompletedDate(String lastCompletedDate)
+    {
+       return this.lastCompletedDate = lastCompletedDate;
     }
 }
