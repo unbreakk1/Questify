@@ -9,6 +9,9 @@ public class HabitResponse
     private String frequency;
     private String difficulty;
     private int streak;
+    private boolean completed;
+    private String lastCompletedDate; // ADD THIS
+
 
     // Constructors and Getters
     public HabitResponse(String id, String title, String frequency, String difficulty, int streak)
@@ -27,7 +30,10 @@ public class HabitResponse
         this.frequency = habit.getFrequency();
         this.difficulty = habit.getDifficulty();
         this.streak = habit.getStreak();
+        this.completed = habit.isCompleted();
+        this.lastCompletedDate = habit.getLastCompletedDate(); // MAKE SURE THIS IS MAPPED
     }
+
 
 
     public String getId()
@@ -78,5 +84,25 @@ public class HabitResponse
     public void setStreak(int streak)
     {
         this.streak = streak;
+    }
+
+    public boolean getCompleted()
+    {
+        return completed;
+    }
+
+    public void setCompleted(boolean completed)
+    {
+        this.completed = completed;
+    }
+
+    public String getLastCompletedDate()
+    {
+        return lastCompletedDate;
+    }
+
+    public void setLastCompletedDate(String lastCompletedDate)
+    {
+        this.lastCompletedDate = lastCompletedDate;
     }
 }

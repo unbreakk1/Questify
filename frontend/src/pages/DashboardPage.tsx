@@ -180,14 +180,21 @@ const DashboardPage: React.FC = () =>
     {
         try
         {
-            await completeHabit(habitId); // Mark habit as completed
-            const updatedHabits = await getAllHabits(); // Re-fetch updated habits
-            setHabits(updatedHabits); // Update local state
+            const updatedHabit = await completeHabit(habitId); // API call to complete habit
+            console.log("Updated Habit:", updatedHabit); // Log response from API
+
+            // Update local state
+            setHabits((prevHabits) =>
+                prevHabits.map((habit) =>
+                    habit.id === habitId ? updatedHabit : habit // Update only the completed habit
+                )
+            );
         } catch (error)
         {
-            console.error(`Failed to complete habit with ID ${habitId}:`, error);
+            console.error("Error completing habit:", error);
         }
     };
+
 
     const handleResetHabit = async (habitId: string) =>
     {
@@ -292,15 +299,13 @@ const DashboardPage: React.FC = () =>
                     <Box>
                         {habits.map((habit) => (
                             <HabitCard
-                                key={habit.id}
+                                key={`${habit.id}-${habit.lastCompletedDate}`} // Ensure React re-renders when lastCompletedDate changes
                                 habit={habit}
-                                onComplete={handleCompleteHabit} // Existing completion handler
-                                onReset={handleResetHabit}      // New reset handler
+                                onComplete={handleCompleteHabit}
+                                onReset={handleResetHabit}
                             />
                         ))}
                     </Box>
-
-
                 </Box>
 
 
