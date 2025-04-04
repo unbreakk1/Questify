@@ -1,5 +1,6 @@
 package org.example.backend.service;
 
+import org.example.backend.dto.HabitCreationRequest;
 import org.example.backend.entity.Habit;
 import org.example.backend.repository.HabitRepository;
 import org.springframework.stereotype.Service;
@@ -108,6 +109,32 @@ public class HabitService
 
         // Save and return the updated habit
         return habitRepository.save(habit);
+    }
+
+    public Habit createHabit(String userId, HabitCreationRequest request)
+    {
+        Habit habit = new Habit();
+        habit.setUserId(userId);
+        habit.setTitle(request.getTitle());
+        habit.setFrequency(request.getFrequency());
+        habit.setDifficulty(request.getDifficulty());
+        habit.setStreak(0);
+        habit.setCompleted(false);
+
+        return habitRepository.save(habit);
+    }
+
+    public void deleteHabit(String userId, String habitId)
+    {
+        Habit habit = habitRepository.findById(habitId)
+                .orElseThrow(() -> new IllegalArgumentException("Habit not found"));
+
+        if (!habit.getUserId().equals(userId))
+        {
+            throw new IllegalArgumentException("Habit does not belong to the user");
+        }
+
+        habitRepository.delete(habit);
     }
 
 }

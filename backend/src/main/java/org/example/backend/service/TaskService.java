@@ -83,4 +83,17 @@ public class TaskService
         return new TaskResponse(updatedTask.getId(), updatedTask.getTitle(), updatedTask.isCompleted(), updatedTask.getDueDate());
     }
 
+    public void deleteTask(String userId, String taskId)
+    {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new IllegalArgumentException("Task not found"));
+
+        if (!task.getUserId().equals(userId))
+        {
+            throw new IllegalArgumentException("Task does not belong to the user");
+        }
+
+        taskRepository.delete(task);
+    }
+
 }

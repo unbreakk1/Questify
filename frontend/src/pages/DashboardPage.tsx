@@ -16,14 +16,15 @@ import {
     TextField,
     Slide,
     Grow,
+    Fab,
 } from '@mui/material';
 import {getAllTasks, createTask} from '../api/TasksAPI';
 import {getAllBosses} from '../api/BossesAPI';
 import {useNavigate} from 'react-router';
 import axios from 'axios';
-import {completeHabit, getAllHabits, Habit, resetHabit} from "../api/HabitsAPI.tsx";
+import {completeHabit, createHabit, deleteHabit, getAllHabits, Habit, resetHabit} from "../api/HabitsAPI.tsx";
 import HabitCard from "../components/habits/HabitCard.tsx";
-
+import AddIcon from '@mui/icons-material/Add';
 // Task interface
 interface Task
 {
@@ -50,9 +51,11 @@ const DashboardPage: React.FC = () =>
     const [currentBoss, setCurrentBoss] = useState<Boss | null>(null); // Active boss
     const [animationsLoaded, setAnimationsLoaded] = useState<boolean>(false); // Animation loaded state
     const [username] = useState<string>('Hero'); // Default username
-    const [openDialog, setOpenDialog] = useState(false); // Dialog state
+    const [openHabitDialog, setOpenHabitDialog] = useState(false); // For habit dialog
+    const [openTaskDialog, setOpenTaskDialog] = useState(false);   // For task dialog
     const [newTask, setNewTask] = useState({title: '', dueDate: ''}); // New task data
     const [habits, setHabits] = useState<Habit[]>([]); // Habit list
+    const [newHabit, setNewHabit] = useState({title: '', frequency: '', difficulty: ''});
     const navigate = useNavigate();
 
     // Fetch tasks and boss data
@@ -118,7 +121,7 @@ const DashboardPage: React.FC = () =>
         {
             const addedTask = await createTask(newTask); // Add new task via API
             setTasks([...tasks, addedTask]); // Update task list locally
-            setOpenDialog(false); // Close dialog
+            setOpenTaskDialog(false); // Close dialog
             setNewTask({title: '', dueDate: ''}); // Reset input
         } catch (error)
         {
@@ -211,6 +214,39 @@ const DashboardPage: React.FC = () =>
         }
     };
 
+    const handleAddHabit = async () =>
+    {
+        try
+        {
+            // Call createHabit API to add the new habit
+            const addedHabit = await createHabit(newHabit);
+
+            // Update the habits list with the newly created habit
+            setHabits([...habits, addedHabit]);
+
+            // Reset input fields
+            setNewHabit({title: '', frequency: '', difficulty: ''});
+        } catch (error)
+        {
+            console.error('Failed to create a new habit:', error);
+        }
+    };
+
+    const handleDeleteHabit = async (habitId: string) =>
+    {
+        try
+        {
+            // Call deleteHabit API to delete the habit from the backend
+            await deleteHabit(habitId);
+
+            // Update the state to remove the deleted habit
+            setHabits(habits.filter(habit => habit.id !== habitId));
+        } catch (error)
+        {
+            console.error(`Failed to delete habit with ID ${habitId}:`, error);
+        }
+    };
+
 
     // Handle user logout
     const handleLogout = () =>
@@ -243,7 +279,7 @@ const DashboardPage: React.FC = () =>
             <Grow in={animationsLoaded}>
                 <Box sx={{py: 2, textAlign: 'center'}}>
                     <Typography variant="h3" color="primary">
-                        Your Epic Quests
+                        YOUR ADD HERE LOL 8)
                     </Typography>
                 </Box>
             </Grow>
@@ -251,7 +287,7 @@ const DashboardPage: React.FC = () =>
             {/* Main Content */}
             <Grid container spacing={3} sx={{padding: 2, flexGrow: 1}}>
                 {/* Tasks Section */}
-                <Box display="flex" flexDirection="row" gap={4} justifyContent="space-between">
+                <Box display="flex" flexDirection="row" gap={2} position="relative" justifyContent="space-between">
                     {/* Tasks Section */}
                     <Box flex={1} display="flex" flexDirection="column" gap={2}>
                         <Typography variant="h5">Tasks</Typography>
@@ -290,25 +326,50 @@ const DashboardPage: React.FC = () =>
                                             {task.completed ? 'Completed' : 'Pending'}
                                         </Typography>
                                     </CardContent>
+
                                 </Card>
                             </Grow>
                         ))}
                     </Box>
+                    {/* Floating Action Button */}
+                    <Fab
+                        color="primary"
+                        aria-label="add"
+                        onClick={() => setOpenTaskDialog(true)} // Opens Create Task Dialog
+                        style={{
+                            position: 'absolute',
+                            bottom: '16px',
+                            right: '111px',
+                            zIndex: 1000,
+                        }}
+                    >
+                        <AddIcon />
+                    </Fab>
+
 
                     {/* Habits Section */}
-                    <Box>
-                        {habits.map((habit) => (
+
+                    <div>
+                        <Typography variant="h6">Habits</Typography>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => setOpenHabitDialog(true)} // Opens Create Habit Dialog
+                            style={{ marginBottom: '16px' }}
+                        >
+                            Create Habit
+                        </Button>
+                        {habits.map(habit => (
                             <HabitCard
-                                key={`${habit.id}-${habit.lastCompletedDate}`} // Ensure React re-renders when lastCompletedDate changes
+                                key={habit.id}
                                 habit={habit}
-                                onComplete={handleCompleteHabit}
-                                onReset={handleResetHabit}
+                                onComplete={(habitId) => handleCompleteHabit(habitId)}
+                                onReset={() => handleResetHabit(habit.id)}
+                                onDelete={() => handleDeleteHabit(habit.id)} // Pass the delete handler
                             />
                         ))}
-                    </Box>
+                    </div>
                 </Box>
-
-
                 {/* Boss Section */}
                 <Grid xs={12} md={6}>
                     <Slide in={animationsLoaded} direction="right">
@@ -335,9 +396,41 @@ const DashboardPage: React.FC = () =>
                     </Slide>
                 </Grid>
             </Grid>
+            {/* Create Habit Dialog */}
+            <Dialog open={openHabitDialog} onClose={() => setOpenHabitDialog(false)}>
+                <DialogContent>
+                    <TextField
+                        label="Habit Title"
+                        fullWidth
+                        value={newHabit.title}
+                        onChange={(e) => setNewHabit({ ...newHabit, title: e.target.value })}
+                    />
+                    <TextField
+                        label="Frequency"
+                        fullWidth
+                        value={newHabit.frequency}
+                        onChange={(e) => setNewHabit({ ...newHabit, frequency: e.target.value })}
+                    />
+                    <TextField
+                        label="Difficulty"
+                        fullWidth
+                        value={newHabit.difficulty}
+                        onChange={(e) => setNewHabit({ ...newHabit, difficulty: e.target.value })}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        onClick={handleAddHabit} // Calls Create Habit logic
+                        variant="contained"
+                        color="primary"
+                    >
+                        Add Habit
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
             {/* Add Task Dialog */}
-            <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+            <Dialog open={openTaskDialog} onClose={() => setOpenTaskDialog(false)}>
                 <DialogContent>
                     <TextField
                         margin="dense"
@@ -357,7 +450,7 @@ const DashboardPage: React.FC = () =>
                     />
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+                    <Button onClick={() => setOpenTaskDialog(false)}>Cancel</Button>
                     <Button onClick={handleAddTask} variant="contained">
                         Add Task
                     </Button>

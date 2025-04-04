@@ -13,9 +13,10 @@ interface TaskCardProps
 {
     task: Task;
     onComplete: () => void;
+    onDelete: () => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({task, onComplete}) =>
+const TaskCard: React.FC<TaskCardProps> = ({task, onComplete , onDelete}) =>
 {
     return (
         <Card>
@@ -29,6 +30,13 @@ const TaskCard: React.FC<TaskCardProps> = ({task, onComplete}) =>
                     disabled={task.completed} // Disable button for completed tasks
                 >
                     {task.completed ? 'Completed' : 'Complete'}
+                </Button>
+                <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={onDelete} // Pass onDelete as a prop and handle it
+                >
+                    Delete
                 </Button>
             </CardContent>
         </Card>

@@ -50,4 +50,13 @@ public class TaskController
         TaskResponse updatedTask = taskService.completeTask(userId, taskId);
         return ResponseEntity.ok(updatedTask);
     }
+
+    @DeleteMapping("/{taskId}")
+    public ResponseEntity<Void> deleteTask(Authentication authentication, @PathVariable String taskId)
+    {
+        String userId = authentication.getName();
+        taskService.deleteTask(userId, taskId);
+        return ResponseEntity.noContent().build();
+    }
+
 }

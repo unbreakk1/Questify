@@ -79,5 +79,22 @@ public class HabitController
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping
+    public ResponseEntity<HabitResponse> createHabit(Authentication authentication, @RequestBody HabitCreationRequest request)
+    {
+        String userId = authentication.getName();
+        Habit habit = habitService.createHabit(userId, request);
+        HabitResponse response = new HabitResponse(habit);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{habitId}")
+    public ResponseEntity<Void> deleteHabit(Authentication authentication, @PathVariable String habitId)
+    {
+        String userId = authentication.getName();
+        habitService.deleteHabit(userId, habitId);
+        return ResponseEntity.noContent().build();
+    }
+
 
 }

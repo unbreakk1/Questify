@@ -1,4 +1,4 @@
-import {Card, CardContent, Typography, Checkbox, Box} from '@mui/material';
+import {Card, CardContent, Typography, Checkbox, Box, Button} from '@mui/material';
 import {Habit} from "../../api/HabitsAPI.tsx";
 
 interface HabitCardProps
@@ -6,9 +6,10 @@ interface HabitCardProps
     habit: Habit;
     onComplete: (habitId: string) => void;
     onReset: (habitId: string) => void; // Add reset handler
+    onDelete: (habitId: string) => void;
 }
 
-const HabitCard: React.FC<HabitCardProps> = ({habit, onComplete}) =>
+const HabitCard: React.FC<HabitCardProps> = ({habit, onComplete, onReset, onDelete}) =>
 {
     const
         {
@@ -49,7 +50,17 @@ const HabitCard: React.FC<HabitCardProps> = ({habit, onComplete}) =>
                         </Typography>
                     )}
                 </Box>
-            </CardContent>
+            <Button
+                onClick={() => onDelete(habit.id)} // Hook up the delete handler
+                color="error"
+                variant="outlined"
+                size="small"
+                style={{ marginTop: '8px' }}
+            >
+                Delete
+            </Button>
+
+        </CardContent>
         </Card>
     );
 };

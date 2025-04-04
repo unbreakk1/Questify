@@ -43,3 +43,11 @@ export const completeTask = async (taskId: string) =>
     return response.data; // Return updated task object
 };
 
+export const deleteTask = async (taskId: string) =>
+{
+    await axios.delete(`${BASE_URL}/${taskId}`, {
+        headers: {Authorization: `Bearer ${token}`},
+    });
+};
+
+

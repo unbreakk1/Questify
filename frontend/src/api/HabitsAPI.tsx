@@ -57,3 +57,19 @@ export const resetHabit = async (habitId: string): Promise<Habit> =>
         throw error;
     }
 };
+
+export const createHabit = async (habit: { title: string; frequency: string; difficulty: string }): Promise<Habit> =>
+{
+    const response = await axios.post(`${BASE_URL}`, habit, {
+        headers: {Authorization: `Bearer ${token}`},
+    });
+    return response.data;
+};
+
+export const deleteHabit = async (habitId: string): Promise<void> =>
+{
+    await axios.delete(`${BASE_URL}/${habitId}`, {
+        headers: {Authorization: `Bearer ${token}`},
+    });
+};
+

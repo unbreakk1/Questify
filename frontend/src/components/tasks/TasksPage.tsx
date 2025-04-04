@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {getAllTasks, completeTask, Task} from '../../api/TasksAPI'; // Import completeTask API function
+import {getAllTasks, completeTask, Task, deleteTask} from '../../api/TasksAPI'; // Import completeTask API function
 import TaskCard from './TaskCard';
 
 const TasksPage: React.FC = () =>
@@ -38,6 +38,21 @@ const TasksPage: React.FC = () =>
         }
     };
 
+    const handleDeleteTask = async (taskId: string) =>
+    {
+        try
+        {
+            // Call the `deleteTask` API to remove the task
+            await deleteTask(taskId);
+
+            // Update the state to remove the deleted task
+            setTasks(tasks.filter((task) => task.id !== taskId));
+        } catch (error)
+        {
+            console.error(`Failed to delete task with ID ${taskId}:`, error);
+        }
+    };
+
 
     return (
         <div>
@@ -45,12 +60,12 @@ const TasksPage: React.FC = () =>
                 <TaskCard
                     key={task.id}
                     task={task}
-                    onComplete={() => handleCompleteTask(task.id)} // Pass task ID to the function
+                    onComplete={() => handleCompleteTask(task.id)} // Handle task completion
+                    onDelete={() => handleDeleteTask(task.id)} // Pass the delete handler
                 />
             ))}
         </div>
     );
-};
-
+}
 export default TasksPage;
 
