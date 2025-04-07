@@ -9,7 +9,7 @@ interface HabitCardProps
     onDelete: (habitId: string) => void;
 }
 
-const HabitCard: React.FC<HabitCardProps> = ({habit, onComplete, onReset, onDelete}) =>
+const HabitCard: React.FC<HabitCardProps> = ({habit, onComplete, onDelete}) =>
 {
     const
         {
@@ -30,7 +30,6 @@ const HabitCard: React.FC<HabitCardProps> = ({habit, onComplete, onReset, onDele
                 padding: '16px',
                 width: '100%',
                 opacity: isCompletedToday ? 0.6 : 1, // Make completed cards less opaque
-                pointerEvents: isCompletedToday ? 'none' : 'auto', // Disable interaction for completed habits
             }}
         >
         <CardContent>

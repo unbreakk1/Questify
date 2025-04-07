@@ -1,5 +1,6 @@
 import React, {useState, useEffect} from 'react';
-import {
+import
+{
     Box,
     Grid,
     Card,
@@ -18,13 +19,14 @@ import {
     Grow,
     Fab,
 } from '@mui/material';
-import {getAllTasks, createTask} from '../api/TasksAPI';
+import {getAllTasks, createTask, deleteTask} from '../api/TasksAPI';
 import {getAllBosses} from '../api/BossesAPI';
 import {useNavigate} from 'react-router';
 import axios from 'axios';
 import {completeHabit, createHabit, deleteHabit, getAllHabits, Habit, resetHabit} from "../api/HabitsAPI.tsx";
 import HabitCard from "../components/habits/HabitCard.tsx";
 import AddIcon from '@mui/icons-material/Add';
+import DeleteButton from '@mui/icons-material/Delete';
 // Task interface
 interface Task
 {
@@ -57,6 +59,7 @@ const DashboardPage: React.FC = () =>
     const [habits, setHabits] = useState<Habit[]>([]); // Habit list
     const [newHabit, setNewHabit] = useState({title: '', frequency: '', difficulty: ''});
     const navigate = useNavigate();
+    const DAMAGE_PER_COMPLETION = 10;
 
     // Fetch tasks and boss data
     useEffect(() =>
@@ -147,6 +150,8 @@ const DashboardPage: React.FC = () =>
 
             if (completed)
             {
+                dealDamageToBoss();
+
                 // Trigger animation by marking the task as recently completed
                 setTasks((prevTasks) =>
                     prevTasks.map((task) =>
@@ -192,11 +197,32 @@ const DashboardPage: React.FC = () =>
                     habit.id === habitId ? updatedHabit : habit // Update only the completed habit
                 )
             );
+            dealDamageToBoss();
+
         } catch (error)
         {
             console.error("Error completing habit:", error);
         }
     };
+
+    const dealDamageToBoss = () => {
+        if (!currentBoss) {
+            console.warn('No current boss to deal damage to!');
+            return;
+        }
+
+        const updatedHealth = currentBoss.currentHealth - DAMAGE_PER_COMPLETION;
+
+        if (updatedHealth <= 0) {
+            // Mark the boss as defeated
+            setCurrentBoss({ ...currentBoss, currentHealth: 0, defeated: true });
+            console.log(`Boss ${currentBoss.name} has been defeated!`);
+        } else {
+            // Update boss health
+            setCurrentBoss({ ...currentBoss, currentHealth: updatedHealth });
+        }
+    };
+
 
 
     const handleResetHabit = async (habitId: string) =>
@@ -247,6 +273,18 @@ const DashboardPage: React.FC = () =>
         }
     };
 
+    const handleDeleteTask = async (taskId: string) => {
+        try {
+            // Call the deleteTask API function
+            await deleteTask(taskId);
+            // Remove the task from the state
+            setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+        } catch (error) {
+            console.error(`Failed to delete task with ID ${taskId}:`, error);
+        }
+    };
+
+
 
     // Handle user logout
     const handleLogout = () =>
@@ -279,7 +317,7 @@ const DashboardPage: React.FC = () =>
             <Grow in={animationsLoaded}>
                 <Box sx={{py: 2, textAlign: 'center'}}>
                     <Typography variant="h3" color="primary">
-                        YOUR ADD HERE LOL 8)
+                        HELP I'VE FALLEN AND I CAN'T GET UP!
                     </Typography>
                 </Box>
             </Grow>
@@ -325,6 +363,15 @@ const DashboardPage: React.FC = () =>
                                         <Typography variant="body2">
                                             {task.completed ? 'Completed' : 'Pending'}
                                         </Typography>
+                                        <Button
+                                            variant="contained"
+                                            color="secondary"
+                                            style={{ marginTop: '10px' }}
+                                            onClick={() => handleDeleteTask(task.id)}
+                                            startIcon={<DeleteButton />}
+                                        >
+                                        </Button>
+
                                     </CardContent>
 
                                 </Card>

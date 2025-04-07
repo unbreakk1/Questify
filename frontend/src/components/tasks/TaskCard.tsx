@@ -1,5 +1,7 @@
 import React from 'react';
-import {Card, CardContent, Typography, Button} from '@mui/material';
+import {Card, CardContent, Typography, Button, Box} from '@mui/material';
+
+
 
 interface Task
 {
@@ -16,28 +18,27 @@ interface TaskCardProps
     onDelete: () => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({task, onComplete , onDelete}) =>
+const TaskCard: React.FC<TaskCardProps> = ({task, onComplete}) =>
 {
     return (
         <Card>
             <CardContent>
-                <Typography variant="h6">{task.title}</Typography>
-                <Typography color="text.secondary">Due: {task.dueDate}</Typography>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={onComplete}
-                    disabled={task.completed} // Disable button for completed tasks
-                >
-                    {task.completed ? 'Completed' : 'Complete'}
-                </Button>
-                <Button
-                    variant="contained"
-                    color="secondary"
-                    onClick={onDelete} // Pass onDelete as a prop and handle it
-                >
-                    Delete
-                </Button>
+                <Box display="flex" flexDirection="column" gap={2}>
+                    <Typography variant="h6">{task.title}</Typography>
+                    <Typography color="text.secondary">Due: {task.dueDate}</Typography>
+                    <Box display="flex" justifyContent="space-between">
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={onComplete}
+                            disabled={task.completed}
+                        >
+                            {task.completed ? 'Completed' : 'Complete'}
+                        </Button>
+                        <Button variant="contained" color="secondary">Test Button</Button>
+
+                    </Box>
+                </Box>
             </CardContent>
         </Card>
     );
