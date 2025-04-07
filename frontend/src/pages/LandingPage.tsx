@@ -7,26 +7,26 @@ import {
     Button,
     CssBaseline,
     Box,
-    Container,
-    Grid,
-    Paper,
-    Card,
-    CardContent,
-    CardActions,
-    CardMedia,
     Drawer,
     List,
     ListItem,
     ListItemText,
     Divider,
+    Paper,
     ThemeProvider,
     createTheme,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    TextField,
+    Alert,
+    CircularProgress,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import { styled } from '@mui/material/styles';
-import LoginDialog from '../components/auth/LoginDialog';
-import RegisterDialog from '../components/auth/RegisterDialog';
- // Optionally add custom fonts
+import { loginUser } from '../api/Auth'; // Import loginUser from Auth
+import { useNavigate } from 'react-router'; // Import useNavigate
 
 // Dark Theme
 const darkTheme = createTheme({
@@ -46,7 +46,7 @@ const darkTheme = createTheme({
 
 // Custom Styled Paper for Hero Section
 const HeroPaper = styled(Paper)(({ theme }) => ({
-    background: 'url(https://via.placeholder.com/1920x1080) no-repeat center center',
+    background: 'url(https://cdn2.unrealengine.com/tiny-tinas-assault-on-dragon-keep-a-wonderlands-one-shot-adventure-1920x1080-48815fcbf80a.jpg) no-repeat center center',
     backgroundSize: 'cover',
     height: '70vh',
     display: 'flex',
@@ -61,14 +61,56 @@ const LandingPage: React.FC = () => {
     const [isRegisterOpen, setIsRegisterOpen] = useState(false);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
+    // Form state for Login
+    const [loginUsername, setLoginUsername] = useState('');
+    const [loginPassword, setLoginPassword] = useState('');
+    const [loginError, setLoginError] = useState('');
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+    const navigate = useNavigate(); // Initialize the navigate function
+
     const toggleDrawer = () => setIsDrawerOpen(!isDrawerOpen);
+
+    // Login form submit handler
+    const handleLoginSubmit = async () => {
+        if (!loginUsername || !loginPassword) {
+            setLoginError('Please fill in both fields.');
+            return;
+        }
+
+        setLoginError('');
+        setIsLoggingIn(true); // Show loading state
+        try {
+            // Call the loginUser function from Auth.tsx
+            const token = await loginUser(loginUsername, loginPassword);
+            localStorage.setItem('token', token); // Save the token to localStorage
+            console.log('Login successful! Token:', token);
+            setIsLoginOpen(false);
+
+            // Navigate to the DashboardPage after successful login
+            navigate('/dashboard'); // Modify this path if your route to DashboardPage is different
+        } catch (error) {
+            setLoginError('Invalid username or password. Please try again.');
+        } finally {
+            setIsLoggingIn(false); // Hide loading state
+        }
+    };
+
+    const handleDialogClose = () => {
+        setIsLoginOpen(false);
+        setIsRegisterOpen(false);
+        setLoginError('');
+        setLoginUsername('');
+        setLoginPassword('');
+    };
 
     return (
         <ThemeProvider theme={darkTheme}>
             <CssBaseline />
-            {/* AppBar */}
+
+            {/* AppBar (Header) */}
             <AppBar position="fixed">
-                <Toolbar>
+                <Toolbar sx={{ width: '100%' }}>
                     <IconButton edge="start" color="inherit" aria-label="menu" onClick={toggleDrawer}>
                         <MenuIcon />
                     </IconButton>
@@ -86,14 +128,19 @@ const LandingPage: React.FC = () => {
 
             {/* Sidebar Drawer */}
             <Drawer anchor="left" open={isDrawerOpen} onClose={toggleDrawer}>
-                <Box sx={{ width: 250, backgroundColor: 'background.default', height: '100%' }}>
+                <Box
+                    sx={{ width: 250, backgroundColor: 'background.default', height: '100%' }}
+                    role="presentation"
+                    onClick={toggleDrawer}
+                    onKeyDown={toggleDrawer}
+                >
                     <Typography variant="h5" sx={{ p: 2 }}>
                         Navigation
                     </Typography>
                     <Divider />
                     <List>
                         {['Home', 'Features', 'Pricing', 'About'].map((text, index) => (
-                            <ListItem button key={text}>
+                            <ListItem button key={index}>
                                 <ListItemText primary={text} />
                             </ListItem>
                         ))}
@@ -101,8 +148,18 @@ const LandingPage: React.FC = () => {
                 </Box>
             </Drawer>
 
-            {/* Hero Section */}
-            <Box sx={{ mt: '64px' }}>
+            {/* Main Content */}
+            <Box
+                sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'stretch',
+                    justifyContent: 'center',
+                    mt: '64px',
+                    width: '100vw',
+                    padding: 0,
+                }}
+            >
                 <HeroPaper elevation={3}>
                     <Box textAlign="center">
                         <Typography variant="h1" gutterBottom>
@@ -118,76 +175,61 @@ const LandingPage: React.FC = () => {
                 </HeroPaper>
             </Box>
 
-            {/* Features Section */}
-            <Container maxWidth="lg">
-                <Typography variant="h2" textAlign="center" gutterBottom>
-                    Why Choose Questify?
-                </Typography>
-                <Grid container spacing={4}>
-                    {[
-                        {
-                            title: 'Gamify Your Life',
-                            description: 'Turn daily tasks into exciting quests.',
-                            image: 'https://via.placeholder.com/300',
-                        },
-                        {
-                            title: 'Level Up',
-                            description: 'Earn rewards and level up as you complete tasks!',
-                            image: 'https://via.placeholder.com/300',
-                        },
-                        {
-                            title: 'Collaborative Adventures',
-                            description: 'Join others for group challenges.',
-                            image: 'https://via.placeholder.com/300',
-                        },
-                    ].map((feature, index) => (
-                        <Grid item xs={12} sm={6} md={4} key={index}>
-                            <Card elevation={4}>
-                                <CardMedia
-                                    component="img"
-                                    height="140"
-                                    image={feature.image}
-                                    alt={feature.title}
-                                />
-                                <CardContent>
-                                    <Typography gutterBottom variant="h5" component="div">
-                                        {feature.title}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        {feature.description}
-                                    </Typography>
-                                </CardContent>
-                                <CardActions>
-                                    <Button size="small" color="primary">
-                                        Learn More
-                                    </Button>
-                                </CardActions>
-                            </Card>
-                        </Grid>
-                    ))}
-                </Grid>
-            </Container>
+            {/* Login Dialog */}
+            <Dialog open={isLoginOpen} onClose={handleDialogClose}>
+                <DialogTitle>Login</DialogTitle>
+                <DialogContent>
+                    {loginError && <Alert severity="error" sx={{ mb: 2 }}>{loginError}</Alert>}
+                    <TextField
+                        label="Username"
+                        variant="outlined"
+                        fullWidth
+                        sx={{ mb: 2 }}
+                        value={loginUsername}
+                        onChange={(e) => setLoginUsername(e.target.value)}
+                    />
+                    <TextField
+                        label="Password"
+                        type="password"
+                        variant="outlined"
+                        fullWidth
+                        sx={{ mb: 2 }}
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    {isLoggingIn ? (
+                        <CircularProgress size={24} sx={{ margin: 'auto', mt: 1, mb: 1 }} />
+                    ) : (
+                        <>
+                            <Button onClick={handleDialogClose}>Cancel</Button>
+                            <Button variant="contained" onClick={handleLoginSubmit}>
+                                Login
+                            </Button>
+                        </>
+                    )}
+                </DialogActions>
+            </Dialog>
 
             {/* Footer */}
             <Box
                 component="footer"
                 sx={{
-                    py: 3,
-                    px: 2,
-                    mt: 4,
-                    backgroundColor: darkTheme.palette.background.paper,
+                    backgroundColor: '#222',
+                    color: '#fff',
+                    textAlign: 'center',
+                    padding: 2,
+                    marginTop: 4,
+                    width: '100vw',
+                    position: 'relative',
+                    left: 0,
                 }}
             >
-                <Container maxWidth="lg">
-                    <Typography variant="body1" align="center">
-                        Questify © {new Date().getFullYear()}
-                    </Typography>
-                </Container>
+                <Typography variant="body2">
+                    © {new Date().getFullYear()} Questify. All Rights Reserved.
+                </Typography>
             </Box>
-
-            {/* Dialogs */}
-            <LoginDialog open={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
-            <RegisterDialog open={isRegisterOpen} onClose={() => setIsRegisterOpen(false)} />
         </ThemeProvider>
     );
 };
