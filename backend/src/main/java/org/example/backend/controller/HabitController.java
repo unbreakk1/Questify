@@ -4,7 +4,7 @@ import org.example.backend.dto.HabitCreationRequest;
 import org.example.backend.dto.HabitResponse;
 import org.example.backend.entity.Habit;
 import org.example.backend.service.HabitService;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,6 +14,7 @@ import java.util.List;
 @RequestMapping("/api/habits")
 public class HabitController
 {
+
     private final HabitService habitService;
 
     public HabitController(HabitService habitService)
@@ -22,79 +23,64 @@ public class HabitController
     }
 
     @GetMapping
-    public ResponseEntity<List<HabitResponse>> getHabits(Authentication authentication)
+    @ResponseStatus(HttpStatus.OK) // 200 OK, successfully retrieved habits
+    public List<HabitResponse> getHabits(Authentication authentication)
     {
         String userId = authentication.getName();
         List<Habit> habits = habitService.getHabits(userId); // Get Habit entities
 
         // Convert Habit entities to DTOs
-        List<HabitResponse> habitResponses = habits.stream()
+        return habits.stream()
                 .map(HabitResponse::new) // Convert Habit to HabitResponse
                 .toList();
-
-        return ResponseEntity.ok(habitResponses);
-    }
-
-
-    //  @PostMapping
-    //  public ResponseEntity<HabitResponse> createHabit(Authentication authentication, @RequestBody HabitCreationRequest request)
-    //  {
-    //      String userId = authentication.getName();
-    //      Habit habit = habitService.createHabit(userId, request); // Get Habit entity
-    //      HabitResponse response = new HabitResponse(habit); // Convert entity to DTO
-    //      return ResponseEntity.ok(response); // Return DTO
-    //  }
-
-    @PutMapping("/{habitId}/complete")
-    public ResponseEntity<HabitResponse> completeHabit(Authentication authentication,
-                                                       @PathVariable String habitId)
-    {
-        // Extract the authenticated user ID
-        String userId = authentication.getName();
-
-        // Call the service to mark the habit as completed
-        Habit completedHabit = habitService.completeHabit(userId, habitId);
-
-        // Convert the updated Habit entity into HabitResponse
-        HabitResponse response = new HabitResponse(completedHabit);
-
-        // Return the response
-        return ResponseEntity.ok(response);
-    }
-
-    @PutMapping("/{habitId}/reset")
-    public ResponseEntity<HabitResponse> resetHabit(
-            Authentication authentication,
-            @PathVariable String habitId
-    )
-    {
-        // Extract the userId from the authentication context
-        String userId = authentication.getName();
-
-        // Call the service to reset the habit
-        Habit resetHabit = habitService.resetHabit(userId, habitId);
-
-        // Convert and return the reset habit as a DTO
-        HabitResponse response = new HabitResponse(resetHabit);
-        return ResponseEntity.ok(response);
     }
 
     @PostMapping
-    public ResponseEntity<HabitResponse> createHabit(Authentication authentication, @RequestBody HabitCreationRequest request)
+    @ResponseStatus(HttpStatus.OK) // 200 OK, habit created successfully
+    public HabitResponse createHabit(Authentication authentication, @RequestBody HabitCreationRequest request)
     {
         String userId = authentication.getName();
         Habit habit = habitService.createHabit(userId, request);
-        HabitResponse response = new HabitResponse(habit);
-        return ResponseEntity.ok(response);
+        return new HabitResponse(habit);
+    }
+
+    @PutMapping("/{habitId}/complete")
+    @ResponseStatus(HttpStatus.OK) // 200 OK, habit completed successfully
+    public HabitResponse completeHabit(Authentication authentication, @PathVariable String habitId)
+    {
+        String userId = authentication.getName();
+        Habit completedHabit = habitService.completeHabit(userId, habitId);
+        return new HabitResponse(completedHabit);
+    }
+
+    @PutMapping("/{habitId}/reset")
+    @ResponseStatus(HttpStatus.OK) // 200 OK, habit reset successfully
+    public HabitResponse resetHabit(Authentication authentication, @PathVariable String habitId)
+    {
+        String userId = authentication.getName();
+        Habit resetHabit = habitService.resetHabit(userId, habitId);
+        return new HabitResponse(resetHabit);
     }
 
     @DeleteMapping("/{habitId}")
-    public ResponseEntity<Void> deleteHabit(Authentication authentication, @PathVariable String habitId)
+    @ResponseStatus(HttpStatus.NO_CONTENT) // 204 No Content, habit successfully deleted
+    public void deleteHabit(Authentication authentication, @PathVariable String habitId)
     {
         String userId = authentication.getName();
         habitService.deleteHabit(userId, habitId);
-        return ResponseEntity.noContent().build();
     }
 
+    @ExceptionHandler({IllegalArgumentException.class})
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public String handleIllegalArgumentException(IllegalArgumentException ex)
+    {
+        return ex.getMessage();
+    }
 
+    @ExceptionHandler({IllegalStateException.class})
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public String handleIllegalStateException(IllegalStateException ex)
+    {
+        return ex.getMessage();
+    }
 }

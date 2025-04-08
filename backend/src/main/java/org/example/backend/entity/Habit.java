@@ -4,7 +4,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document("habits")
-public class Habit {
+public class Habit
+{
 
     @Id
     private String id;
@@ -17,67 +18,83 @@ public class Habit {
     private String lastCompletedDate; // Date the habit was last completed (ISO format)
 
     // Getters & Setters
-    public String getId() {
+    public String getId()
+    {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(String id)
+    {
         this.id = id;
     }
 
-    public String getUserId() {
+    public String getUserId()
+    {
         return userId;
     }
 
-    public void setUserId(String userId) {
+    public void setUserId(String userId)
+    {
         this.userId = userId;
     }
 
-    public String getTitle() {
+    public String getTitle()
+    {
         return title;
     }
 
-    public void setTitle(String title) {
+    public void setTitle(String title)
+    {
         this.title = title;
     }
 
-    public String getFrequency() {
+    public String getFrequency()
+    {
         return frequency;
     }
 
-    public void setFrequency(String frequency) {
+    public void setFrequency(String frequency)
+    {
         this.frequency = frequency;
     }
 
-    public String getDifficulty() {
+    public String getDifficulty()
+    {
         return difficulty;
     }
 
-    public void setDifficulty(String difficulty) {
+    public void setDifficulty(String difficulty)
+    {
         this.difficulty = difficulty;
     }
 
-    public int getStreak() {
+    public int getStreak()
+    {
         return streak;
     }
 
-    public void setStreak(int streak) {
+    public void setStreak(int streak)
+    {
         this.streak = streak;
     }
 
-    public boolean isCompleted() {
+    public boolean isCompleted()
+    {
         return completed;
     }
 
-    public void setCompleted(boolean completed) {
+    public void setCompleted(boolean completed)
+    {
         this.completed = completed;
     }
 
-    public String getLastCompletedDate() {
+    public String getLastCompletedDate()
+    {
         return lastCompletedDate;
     }
 
-    public void setLastCompletedDate(String lastCompletedDate) {
+    public void setLastCompletedDate(String lastCompletedDate)
+    {
         this.lastCompletedDate = lastCompletedDate;
     }
 }

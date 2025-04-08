@@ -4,6 +4,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Document("users") // MongoDB collection: `users`
 public class User
@@ -14,6 +15,7 @@ public class User
     private String username;      // Display name for the user
     private String email;         // Email for authentication
     private String password;      // Hashed password
+    private Set<String> roles;    // Roles associated with the user (like ADMIN, USER)
     private int level;            // Current level of the user
     private int experience;       // Total XP earned
     private int streak;           // Current streak (e.g., consecutive days completing habits)
@@ -139,5 +141,15 @@ public class User
     public void setUpdatedAt(LocalDateTime updatedAt)
     {
         this.updatedAt = updatedAt;
+    }
+
+    public Set<String> getRoles()
+    {
+        return roles;
+    }
+
+    public void setRoles(Set<String> roles)
+    {
+        this.roles = roles;
     }
 }

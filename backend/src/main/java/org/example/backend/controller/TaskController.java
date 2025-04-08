@@ -3,11 +3,10 @@ package org.example.backend.controller;
 import org.example.backend.dto.TaskCreationRequest;
 import org.example.backend.dto.TaskResponse;
 import org.example.backend.service.TaskService;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -23,40 +22,50 @@ public class TaskController
     }
 
     @PostMapping
-    public ResponseEntity<TaskResponse> createTask(Authentication authentication, @RequestBody TaskCreationRequest request)
+    @ResponseStatus(HttpStatus.OK) // 200 OK, task created successfully
+    public TaskResponse createTask(Authentication authentication, @RequestBody TaskCreationRequest request)
     {
-        String userId = authentication.getName(); // Extract user ID from JWT token
-        TaskResponse taskResponse = taskService.createTask(userId, request);
-        return ResponseEntity.ok(taskResponse);
+        String userId = authentication.getName(); // Extract user ID from the JWT token
+        return taskService.createTask(userId, request);
     }
 
     @GetMapping
-    public ResponseEntity<List<TaskResponse>> getAllTasks(Authentication authentication)
+    @ResponseStatus(HttpStatus.OK) // 200 OK, successfully retrieved tasks
+    public List<TaskResponse> getAllTasks(Authentication authentication)
     {
-        String userId = authentication.getName(); // Extract userId from the authentication context
-        System.out.println("Authenticated userId: " + userId); // Debug log
+        String userId = authentication.getName(); // Extract user ID from the authentication context
 
-        // Retrieve all tasks for the user, ignoring the date
-        List<TaskResponse> tasks = taskService.getAllTasksForUser(userId);
-        return ResponseEntity.ok(tasks);
+        // Retrieve all tasks for the user
+        return taskService.getAllTasksForUser(userId);
     }
 
-
     @PutMapping("/{taskId}/complete")
-    public ResponseEntity<TaskResponse> completeTask(Authentication authentication,
-                                                     @PathVariable String taskId)
+    @ResponseStatus(HttpStatus.OK) // 200 OK, task marked as complete
+    public TaskResponse completeTask(Authentication authentication, @PathVariable String taskId)
     {
         String userId = authentication.getName();
-        TaskResponse updatedTask = taskService.completeTask(userId, taskId);
-        return ResponseEntity.ok(updatedTask);
+        return taskService.completeTask(userId, taskId);
     }
 
     @DeleteMapping("/{taskId}")
-    public ResponseEntity<Void> deleteTask(Authentication authentication, @PathVariable String taskId)
+    @ResponseStatus(HttpStatus.NO_CONTENT) // 204 No Content, task successfully deleted
+    public void deleteTask(Authentication authentication, @PathVariable String taskId)
     {
         String userId = authentication.getName();
         taskService.deleteTask(userId, taskId);
-        return ResponseEntity.noContent().build();
     }
 
+    @ExceptionHandler({IllegalArgumentException.class})
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public String handleIllegalArgumentException(IllegalArgumentException ex)
+    {
+        return ex.getMessage();
+    }
+
+    @ExceptionHandler({IllegalStateException.class})
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public String handleIllegalStateException(IllegalStateException ex)
+    {
+        return ex.getMessage();
+    }
 }

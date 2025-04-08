@@ -5,13 +5,12 @@ import org.example.backend.dto.AuthenticationResponse;
 import org.example.backend.exceptions.UserAlreadyExistsException;
 import org.example.backend.service.UserService;
 import org.example.backend.util.JwtUtil;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
-
 
 @RestController
 @RequestMapping("/auth")
@@ -30,37 +29,38 @@ public class AuthController
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthenticationResponse> login(@RequestBody AuthenticationRequest request)
+    @ResponseStatus(HttpStatus.OK) // 200 OK, authentication successful
+    public AuthenticationResponse login(@RequestBody AuthenticationRequest request)
     {
-        try
-        {
-            // Authenticate user
-            Authentication auth = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
-            );
+        // Authenticate user
+        Authentication auth = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+        );
 
-            // Generate JWT token
-            String token = jwtUtil.generateToken(auth.getName());
-            return ResponseEntity.ok(new AuthenticationResponse(token));
-
-        }
-        catch (AuthenticationException e)
-        {
-            return ResponseEntity.status(401).body(new AuthenticationResponse("Invalid credentials"));
-        }
+        // Generate JWT token
+        String token = jwtUtil.generateToken(auth.getName());
+        return new AuthenticationResponse(token);
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody AuthenticationRequest request)
+    @ResponseStatus(HttpStatus.OK) // 200 OK, user registered successfully
+    public String register(@RequestBody AuthenticationRequest request)
     {
-        try
-        {
-            userService.registerUser(request.getUsername(), request.getPassword());
-            return ResponseEntity.ok("User registered successfully");
-        }
-        catch (UserAlreadyExistsException e)
-        {
-            return ResponseEntity.status(400).body(e.getMessage());
-        }
+        userService.registerUser(request.getUsername(), request.getPassword());
+        return "User registered successfully";
+    }
+
+    @ExceptionHandler({AuthenticationException.class})
+    @ResponseStatus(HttpStatus.UNAUTHORIZED) // 401 Unauthorized for invalid credentials
+    public AuthenticationResponse handleAuthenticationException(AuthenticationException ex)
+    {
+        return new AuthenticationResponse("Invalid credentials");
+    }
+
+    @ExceptionHandler({UserAlreadyExistsException.class})
+    @ResponseStatus(HttpStatus.BAD_REQUEST) // 400 Bad Request for duplicate user registration
+    public String handleUserAlreadyExistsException(UserAlreadyExistsException ex)
+    {
+        return ex.getMessage();
     }
 }

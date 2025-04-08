@@ -4,8 +4,8 @@ import org.example.backend.dto.BossResponse;
 import org.example.backend.dto.DamageRequest;
 import org.example.backend.entity.Boss;
 import org.example.backend.service.BossService;
+import org.example.backend.service.UserService;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,70 +17,69 @@ public class BossController
 {
 
     private final BossService bossService;
+    private final UserService userService;
 
-    public BossController(BossService bossService)
+    public BossController(BossService bossService, UserService userService)
     {
         this.bossService = bossService;
+        this.userService = userService;
     }
 
     @GetMapping
-    public ResponseEntity<BossResponse> getActiveBoss(Authentication authentication)
+    @ResponseStatus(HttpStatus.OK)
+    public BossResponse getActiveBoss(Authentication authentication)
     {
         String userId = authentication.getName();
-
-        try
-        {
-            BossResponse bossResponse = bossService.getActiveBoss(userId);
-            return ResponseEntity.ok(bossResponse);
-        }
-        catch (IllegalArgumentException e)
-        {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
+        return bossService.getActiveBoss(userId);
     }
-
 
     @PutMapping("/attack")
-    public ResponseEntity<BossResponse> attackBoss(Authentication authentication,
-                                                   @RequestBody DamageRequest damageRequest)
+    @ResponseStatus(HttpStatus.OK)
+    public BossResponse attackBoss(Authentication authentication, @RequestBody DamageRequest damageRequest)
     {
         String userId = authentication.getName();
-        BossResponse updatedBoss = bossService.dealDamage(userId, damageRequest.getDamage());
-        return ResponseEntity.ok(updatedBoss);
+        return bossService.dealDamage(userId, damageRequest.getDamage());
     }
 
-    @PostMapping("/create")
-    public ResponseEntity<BossResponse> createBoss(@RequestBody Boss boss, Authentication authentication)
+    @GetMapping("/selection")
+    @ResponseStatus(HttpStatus.OK)
+    public List<Boss> getBossSelection(Authentication authentication)
     {
-        String userId = authentication.getName(); // Extract user ID from authentication
-        BossResponse bossResponse = bossService.createBoss(userId, boss);
-        return ResponseEntity.ok(bossResponse);
+        String userId = authentication.getName();
+        int userLevel = userService.getUserBasicDetails(userId).getLevel();
+        return bossService.getBossSelection(userLevel);
     }
 
-    // Get a selection of 4 random active bosses
- //  @GetMapping("/selection")
- //  public ResponseEntity<List<Boss>> getBossSelection(@RequestParam("userId") String userId)
- //  {
- //      List<Boss> bosses = bossService.getBossSelection(userId);
+    @PostMapping("/select/{bossId}")
+    @ResponseStatus(HttpStatus.OK)
+    public String selectBoss(Authentication authentication, @PathVariable String bossId)
+    {
+        String userId = authentication.getName();
+        return "Boss successfully selected for user " + userId;
+    }
 
- //      // Return empty array if no bosses
- //      return bosses.isEmpty()
- //              ? ResponseEntity.ok(List.of())
- //              : ResponseEntity.ok(bosses);
- //  }
-
-
-    // Select a boss to start the fight
     @PostMapping("/fight/{bossId}")
-    public ResponseEntity<String> startBossFight(@PathVariable String bossId)
+    @ResponseStatus(HttpStatus.OK)
+    public String startBossFight(@PathVariable String bossId)
     {
-        boolean success = bossService.initiateBossFight(bossId);
-        if (success)
+        if (bossService.initiateBossFight(bossId))
         {
-            return ResponseEntity.ok("Boss fight started!");
+            return "Boss fight started!";
         }
-        return ResponseEntity.status(HttpStatus.CONFLICT).body("Could not start fight. Please try again.");
+        throw new IllegalStateException("Could not start fight. Please try again."); // Will map to 409 Conflict in a handler
     }
 
+    @ExceptionHandler({IllegalArgumentException.class})
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public String handleIllegalArgumentException(IllegalArgumentException ex)
+    {
+        return ex.getMessage();
+    }
 
+    @ExceptionHandler({IllegalStateException.class})
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public String handleIllegalStateException(IllegalStateException ex)
+    {
+        return ex.getMessage();
+    }
 }
