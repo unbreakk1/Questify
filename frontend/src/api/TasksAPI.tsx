@@ -1,53 +1,40 @@
-import axios from 'axios';
-
-const BASE_URL = 'http://localhost:8080/api/tasks';
-const token = localStorage.getItem('token'); // Retrieve JWT for auth
+import apiClient from './ApiClient'; // Import centralized Axios client
 
 export interface Task
 {
     id: string;
     title: string;
-    dueDate: string; // YYYY-MM-DD
+    dueDate: string; // Format: YYYY-MM-DD
     completed: boolean;
     lastCompletedDate?: string; // Tracks when the task was last completed
     recentlyCompleted?: boolean; // Used to trigger animation
-
 }
 
-export const getAllTasks = async () =>
+const BASE_URL = '/api/tasks'; // Relative URL for task APIs
+
+// Fetch all tasks
+export const getAllTasks = async (): Promise<Task[]> =>
 {
-    const response = await axios.get(`${BASE_URL}`, {
-        headers: {Authorization: `Bearer ${token}`},
-    });
+    const response = await apiClient.get(BASE_URL);
     return response.data;
 };
 
-export const createTask = async (task: { title: string; dueDate: string }) =>
+// Create a new task
+export const createTask = async (task: { title: string; dueDate: string }): Promise<Task> =>
 {
-    const response = await axios.post(`${BASE_URL}`, task, {
-        headers: {Authorization: `Bearer ${token}`},
-    });
+    const response = await apiClient.post(BASE_URL, task);
     return response.data;
 };
 
-// Add `completeTask` function and export it
-export const completeTask = async (taskId: string) =>
+// Mark a task as completed
+export const completeTask = async (taskId: string): Promise<Task> =>
 {
-    const response = await axios.put(
-        `${BASE_URL}/${taskId}/complete`,
-        {}, // No request body needed
-        {
-            headers: {Authorization: `Bearer ${token}`},
-        }
-    );
-    return response.data; // Return updated task object
+    const response = await apiClient.put(`${BASE_URL}/${taskId}/complete`);
+    return response.data;
 };
 
-export const deleteTask = async (taskId: string) =>
+// Delete a task
+export const deleteTask = async (taskId: string): Promise<void> =>
 {
-    await axios.delete(`${BASE_URL}/${taskId}`, {
-        headers: {Authorization: `Bearer ${token}`},
-    });
+    await apiClient.delete(`${BASE_URL}/${taskId}`);
 };
-
-

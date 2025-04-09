@@ -1,4 +1,4 @@
-import axios from 'axios';
+import apiClient from './ApiClient'; // Centralized Axios client
 
 export interface Habit
 {
@@ -11,65 +11,38 @@ export interface Habit
     lastCompletedDate?: string;
 }
 
-const BASE_URL = 'http://localhost:8080/api/habits';
-const token = localStorage.getItem('token');
+const BASE_URL = '/api/habits'; // Relative URL for habit APIs
 
+// Fetch all habits
 export const getAllHabits = async (): Promise<Habit[]> =>
 {
-    const response = await axios.get(`${BASE_URL}`, {
-        headers: {Authorization: `Bearer ${token}`},
-    });
+    const response = await apiClient.get(BASE_URL);
     return response.data;
 };
 
+// Mark a habit as completed
 export const completeHabit = async (habitId: string): Promise<Habit> =>
 {
-    try
-    {
-        const response = await axios.put(
-            `${BASE_URL}/${habitId}/complete`,
-            {},
-            {headers: {Authorization: `Bearer ${token}`}}
-        );
-        return response.data;
-    } catch (error)
-    {
-        console.error("Failed to complete habit:", error);
-        throw error;
-    }
-};
-
-export const resetHabit = async (habitId: string): Promise<Habit> =>
-{
-    try
-    {
-        const response = await axios.put(
-            `${BASE_URL}/${habitId}/reset`,
-            {}, // Empty body
-            {
-                headers: {Authorization: `Bearer ${localStorage.getItem('token')}`},
-            }
-        );
-        return response.data;
-    } catch (error)
-    {
-        console.error(`Failed to reset habit with ID ${habitId}:`, error);
-        throw error;
-    }
-};
-
-export const createHabit = async (habit: { title: string; frequency: string; difficulty: string }): Promise<Habit> =>
-{
-    const response = await axios.post(`${BASE_URL}`, habit, {
-        headers: {Authorization: `Bearer ${token}`},
-    });
+    const response = await apiClient.put(`${BASE_URL}/${habitId}/complete`);
     return response.data;
 };
 
-export const deleteHabit = async (habitId: string): Promise<void> =>
+// Reset a habit
+export const resetHabit = async (habitId: string): Promise<Habit> =>
 {
-    await axios.delete(`${BASE_URL}/${habitId}`, {
-        headers: {Authorization: `Bearer ${token}`},
-    });
+    const response = await apiClient.put(`${BASE_URL}/${habitId}/reset`);
+    return response.data;
 };
 
+// Create a new habit
+export const createHabit = async (habit: { title: string; frequency: string; difficulty: string }): Promise<Habit> =>
+{
+    const response = await apiClient.post(BASE_URL, habit);
+    return response.data;
+};
+
+// Delete a habit
+export const deleteHabit = async (habitId: string): Promise<void> =>
+{
+    await apiClient.delete(`${BASE_URL}/${habitId}`);
+};

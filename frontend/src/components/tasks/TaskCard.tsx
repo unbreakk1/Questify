@@ -1,7 +1,6 @@
+// TaskCard.tsx
 import React from 'react';
 import {Card, CardContent, Typography, Button, Box} from '@mui/material';
-
-
 
 interface Task
 {
@@ -9,34 +8,30 @@ interface Task
     title: string;
     dueDate: string;
     completed: boolean;
+    onComplete: (taskId: string) => void;
+    onDelete: (taskId: string) => void;
 }
 
-interface TaskCardProps
-{
-    task: Task;
-    onComplete: () => void;
-    onDelete: () => void;
-}
-
-const TaskCard: React.FC<TaskCardProps> = ({task, onComplete}) =>
+const TaskCard: React.FC<Task> = ({id, title, dueDate, completed, onComplete, onDelete}) =>
 {
     return (
         <Card>
             <CardContent>
                 <Box display="flex" flexDirection="column" gap={2}>
-                    <Typography variant="h6">{task.title}</Typography>
-                    <Typography color="text.secondary">Due: {task.dueDate}</Typography>
+                    <Typography variant="h6">{title}</Typography>
+                    <Typography color="text.secondary">Due: {dueDate}</Typography>
                     <Box display="flex" justifyContent="space-between">
                         <Button
                             variant="contained"
                             color="primary"
-                            onClick={onComplete}
-                            disabled={task.completed}
+                            onClick={() => onComplete(id)}
+                            disabled={completed}
                         >
-                            {task.completed ? 'Completed' : 'Complete'}
+                            {completed ? 'Completed' : 'Complete'}
                         </Button>
-                        <Button variant="contained" color="secondary">Test Button</Button>
-
+                        <Button variant="contained" color="error" onClick={() => onDelete(id)}>
+                            Delete
+                        </Button>
                     </Box>
                 </Box>
             </CardContent>
@@ -45,4 +40,3 @@ const TaskCard: React.FC<TaskCardProps> = ({task, onComplete}) =>
 };
 
 export default TaskCard;
-

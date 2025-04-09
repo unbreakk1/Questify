@@ -1,30 +1,50 @@
-import axios from 'axios';
+import apiClient from './ApiClient'; // Centralized Axios client
 
-const BASE_URL = 'http://localhost:8080/api/boss';
-const token = localStorage.getItem('token'); // Retrieve JWT for auth
-
-export const getAllBosses = async () =>
+export interface Boss
 {
-    const response = await axios.get(`${BASE_URL}`, {
-        headers: {Authorization: `Bearer ${token}`},
-    });
+    id: string;
+    name: string;
+    maxHealth: number;
+    currentHealth: number;
+    levelRequirement: number;
+    defeated: boolean;
+    rare: boolean;
+    rewards: {
+        xp: number;
+        badge: string;
+    };
+}
 
-    if (Array.isArray(response.data))
-    {
-        return response.data; // Return if it’s already an array
-    }
-    else
-    {
-        console.warn('Bosses API returned a single object. Wrapping it in an array.');
-        return [response.data]; // Wrap single object in an array if necessary
-    }
+export interface BossResponse
+{
+    boss: Boss;
+    message?: string;
+}
+
+// Fetch a selection of bosses based on user's level
+export const getBossSelection = async (): Promise<Boss[]> =>
+{
+    const response = await apiClient.get('/api/boss/selection');
+    return response.data; // Return list of bosses
 };
 
-
-export const createBoss = async (boss: { name: string; maxHealth: number; levelRequirement: number }) =>
+// Select a specific boss for the fight
+export const selectBoss = async (bossId: string): Promise<string> =>
 {
-    const response = await axios.post(`${BASE_URL}/create`, boss, {
-        headers: {Authorization: `Bearer ${token}`},
-    });
-    return response.data;
+    const response = await apiClient.post(`/api/boss/select/${bossId}`);
+    return response.data; // Return success message
+};
+
+// Start the fight with a specific boss
+export const startBossFight = async (bossId: string): Promise<string> =>
+{
+    const response = await apiClient.post(`/api/boss/fight/${bossId}`);
+    return response.data; // Return success message
+};
+
+// Attack a boss with a specified amount of damage
+export const attackBoss = async (damage: number): Promise<BossResponse> =>
+{
+    const response = await apiClient.put('/api/boss/attack', {damage});
+    return response.data; // Return the updated boss and any related message
 };
