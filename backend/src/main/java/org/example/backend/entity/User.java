@@ -4,6 +4,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 @Document("users") // MongoDB collection: `users`
@@ -11,17 +12,20 @@ public class User
 {
 
     @Id
-    private String id;            // Unique ID for the user
-    private String username;      // Display name for the user
-    private String email;         // Email for authentication
-    private String password;      // Hashed password
-    private Set<String> roles;    // Roles associated with the user (like ADMIN, USER)
-    private int level;            // Current level of the user
-    private int experience;       // Total XP earned
-    private int streak;           // Current streak (e.g., consecutive days completing habits)
-    private String currentBossId; // Reference to the boss the user is currently fighting
+    private String id;               // Unique ID for the user
+    private String username;         // Display name for the user
+    private String email;            // Email for authentication
+    private String password;         // Hashed password
+    private Set<String> roles;       // Roles associated with the user (like ADMIN, USER)
+    private int level;               // Current level of the user
+    private int experience;          // Total XP earned
+    private int streak;              // Current streak (e.g., consecutive days completing habits)
+    private String currentBossId;    // Reference to the boss the user is currently fighting
     private LocalDateTime createdAt; // Account creation timestamp
     private LocalDateTime updatedAt; // Last activity timestamp
+    private int gold = 0;
+    private Set<String> badges = new HashSet<>();
+
 
     // Default constructor
     public User()
@@ -152,4 +156,34 @@ public class User
     {
         this.roles = roles;
     }
+
+    public int getGold()
+    {
+        return gold;
+    }
+
+    public void setGold(int gold)
+    {
+        this.gold = gold;
+    }
+
+    public boolean hasBadge(String badge)
+    {
+        return badges != null && badges.contains(badge);
+    }
+
+    public void addBadge(String badge)
+    {
+        if (badges == null)
+        {
+            badges = new HashSet<>();
+        }
+        badges.add(badge);
+    }
+
+    public Set<String> getBadges()
+    {
+        return badges;
+    }
+
 }

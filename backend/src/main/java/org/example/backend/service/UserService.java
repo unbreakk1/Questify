@@ -142,4 +142,13 @@ public class UserService implements UserDetailsService
         return user.getCurrentBossId();
     }
 
+    public void updateGoldAndBadges(String userId, int gold, Set<String> badges) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        user.setGold(gold);
+        user.getBadges().addAll(badges);
+        userRepository.save(user);
+    }
+
+
+
 }

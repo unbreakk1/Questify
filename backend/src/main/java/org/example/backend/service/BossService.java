@@ -2,6 +2,7 @@ package org.example.backend.service;
 
 import org.example.backend.dto.BossResponse;
 import org.example.backend.entity.Boss;
+import org.example.backend.entity.User;
 import org.example.backend.repository.BossRepository;
 import org.springframework.stereotype.Service;
 
@@ -13,10 +14,12 @@ public class BossService
 {
 
     private final BossRepository bossRepository;
+    private final UserService userService;
 
-    public BossService(BossRepository bossRepository)
+    public BossService(BossRepository bossRepository, UserService userService)
     {
         this.bossRepository = bossRepository;
+        this.userService = userService;
     }
 
     /**
@@ -53,7 +56,7 @@ public class BossService
         if (boss.getCurrentHealth() <= 0)
         {
             boss.setDefeated(true);
-            // TODO: Add logic for rewards or other events triggered by boss defeat
+
         }
 
         bossRepository.save(boss);
@@ -146,4 +149,77 @@ public class BossService
         return true;
     }
 
+    private void handleBossDefeat(Boss boss, String userId) {
+        // Mark the boss as defeated
+        boss.setDefeated(true);
+        bossRepository.save(boss); // Save the updated boss
+
+        // Fetch the user
+        User user = userService.getUserBasicDetails(userId);
+
+        // Extract rewards from the boss
+        Boss.Rewards rewards = boss.getRewards();
+
+        // Update XP and level
+        int updatedXp = user.getExperience();
+        int updatedLevel = user.getLevel();
+        if (rewards != null) {
+            updatedXp += rewards.getXp();
+
+            // Level-up logic
+            while (updatedXp >= calculateXpThresholdForLevel(updatedLevel)) {
+                updatedXp -= calculateXpThresholdForLevel(updatedLevel);
+                updatedLevel++;
+            }
+
+            // Call `updateUserDetails` for XP and level updates
+            userService.updateUserDetails(userId, updatedXp, updatedLevel, null);
+        }
+
+        // Update Gold (Virtual Currency)
+        int goldReward = calculateGoldRewardForBoss(boss);
+        user.setGold(user.getGold() + goldReward); // Update user instance with new Gold
+
+        // Award Badge for First Time Completion
+        if (rewards != null && rewards.getBadge() != null) {
+            String badge = rewards.getBadge();
+            if (!user.hasBadge(badge)) { // Award badge only if the user doesn't already have it
+                user.addBadge(badge);
+            }
+        }
+
+        // Trigger additional events (notifications, etc.)
+        triggerDefeatEvents(userId, boss, goldReward);
+    }
+
+
+    /**
+     * Calculates the XP threshold for leveling up.
+     * Here we use a simple placeholder example, but you can replace this logic with more advanced mechanics.
+     */
+    private int calculateXpThresholdForLevel(int level)
+    {
+        return 100 + (level * 50); // Example: 100 base + 50 XP per level
+    }
+
+    /**
+     * Calculates the gold reward for defeating a boss.
+     * You can fine-tune this based on the boss's level, difficulty, etc.
+     */
+    private int calculateGoldRewardForBoss(Boss boss)
+    {
+        return boss.getLevelRequirement() * 10; // Example: 10 Gold per level requirement of the defeated boss
+    }
+
+    /**
+     * Trigger any additional events upon boss defeat — such as notifications, messages, or observer updates.
+     */
+    private void triggerDefeatEvents(String userId, Boss boss, int goldReward)
+    {
+        // Example: Send a notification to the user
+        String message = "Congratulations! " + userId + " You've defeated " + boss.getName() +
+                ", earned " + boss.getRewards().getXp() + " XP and " +
+                goldReward + " Gold!";
+        System.out.println(message); // Replace with an actual notification mechanism (e.g., in-app or email)
+    }
 }
