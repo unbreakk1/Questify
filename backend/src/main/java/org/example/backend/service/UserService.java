@@ -27,21 +27,37 @@ public class UserService implements UserDetailsService
     }
 
     // Register a new user
-    public User registerUser(String username, String rawPassword)
+    public User registerUser(String username, String email, String rawPassword)
     {
-        // Check if the user already exists
-        if (userRepository.findByUsername(username).isPresent())
+        // Check if username or email already exists
+        if (userRepository.existsByUsername(username))
         {
-            throw new UserAlreadyExistsException("User with username '" + username + "' already exists.");
+            throw new UserAlreadyExistsException("Username is already taken.");
         }
+        if (userRepository.existsByEmail(email))
+        {
+            throw new UserAlreadyExistsException("Email is already taken.");
+        }
+
+        // Hash the password before saving
+        String encodedPassword = passwordEncoder.encode(rawPassword);
 
         // Create and save the new user
         User user = new User();
         user.setUsername(username);
-        user.setPassword(passwordEncoder.encode(rawPassword)); // Secure password
-        user.setRoles(Set.of("USER")); // Assign default role
+        user.setEmail(email);
+        user.setPassword(encodedPassword); // Store hashed password
+        user.setLevel(0);
+        user.setExperience(0);
+        user.setStreak(0);
+        user.setGold(0);
+        user.addBadge("Newbie");
+        user.setCreatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
+
         return userRepository.save(user);
     }
+
 
     // Load user details required by Spring Security during authentication
     @Override
@@ -142,13 +158,13 @@ public class UserService implements UserDetailsService
         return user.getCurrentBossId();
     }
 
-    public void updateGoldAndBadges(String userId, int gold, Set<String> badges) {
+    public void updateGoldAndBadges(String userId, int gold, Set<String> badges)
+    {
         User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
         user.setGold(gold);
         user.getBadges().addAll(badges);
         userRepository.save(user);
     }
-
 
 
 }

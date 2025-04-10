@@ -46,7 +46,7 @@ public class AuthController
     @ResponseStatus(HttpStatus.OK) // 200 OK, user registered successfully
     public String register(@RequestBody AuthenticationRequest request)
     {
-        userService.registerUser(request.getUsername(), request.getPassword());
+        userService.registerUser(request.getUsername(), request.getPassword(), "USER");
         return "User registered successfully";
     }
 

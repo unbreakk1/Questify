@@ -26,7 +26,8 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import { styled } from '@mui/material/styles';
 import { loginUser } from '../api/Auth'; // Import loginUser from Auth
-import { useNavigate } from 'react-router'; // Import useNavigate
+import { useNavigate } from 'react-router';
+import RegisterDialog from "../components/auth/RegisterDialog.tsx"; // Import useNavigate
 
 // Dark Theme
 const darkTheme = createTheme({
@@ -87,9 +88,9 @@ const LandingPage: React.FC = () => {
             console.log('Login successful! Token:', token);
             setIsLoginOpen(false);
 
-            // Navigate to the DashboardPage after successful login
-            navigate('/dashboard'); // Modify this path if your route to DashboardPage is different
-        } catch (error) {
+
+            navigate('/dashboard');
+        } catch {
             setLoginError('Invalid username or password. Please try again.');
         } finally {
             setIsLoggingIn(false); // Hide loading state
@@ -125,12 +126,14 @@ const LandingPage: React.FC = () => {
                     </Button>
                 </Toolbar>
             </AppBar>
+            <RegisterDialog open={isRegisterOpen} onClose={handleDialogClose} />
+
 
             {/* Sidebar Drawer */}
             <Drawer anchor="left" open={isDrawerOpen} onClose={toggleDrawer}>
                 <Box
                     sx={{ width: 250, backgroundColor: 'background.default', height: '100%' }}
-                    role="presentation"
+                    aria-hidden="true"
                     onClick={toggleDrawer}
                     onKeyDown={toggleDrawer}
                 >
@@ -139,8 +142,8 @@ const LandingPage: React.FC = () => {
                     </Typography>
                     <Divider />
                     <List>
-                        {['Home', 'Features', 'Pricing', 'About'].map((text, index) => (
-                            <ListItem button key={index}>
+                        {['Home', 'Features', 'Pricing', 'About'].map((text) => (
+                            <ListItem button key={text} component="li" disablePadding>
                                 <ListItemText primary={text} />
                             </ListItem>
                         ))}
