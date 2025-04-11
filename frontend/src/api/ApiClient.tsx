@@ -13,10 +13,10 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
     (config) =>
     {
-        const token = localStorage.getItem('token'); // Get token from localStorage
-        if (token)
-        {
-            config.headers.Authorization = `Bearer ${token}`; // Attach token to headers
+        const token = localStorage.getItem('token'); // Get the token
+        // Only include the token for requests that aren't login or register
+        if (token && !['/auth/login', '/auth/register'].some((url) => config.url?.includes(url))) {
+            config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
     },
@@ -26,6 +26,7 @@ apiClient.interceptors.request.use(
         return Promise.reject(error);
     }
 );
+
 
 // Add a response interceptor for global error handling (optional)
 apiClient.interceptors.response.use(

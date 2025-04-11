@@ -9,6 +9,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.Optional;
 import java.util.Set;
 import java.time.LocalDateTime;
@@ -16,6 +18,9 @@ import java.time.LocalDateTime;
 @Service
 public class UserService implements UserDetailsService
 {
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
+
+
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -61,18 +66,21 @@ public class UserService implements UserDetailsService
 
     // Load user details required by Spring Security during authentication
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException
-    {
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        log.info("Attempting to fetch user details for username: {}", username);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
-        // Convert User entity to Spring Security UserDetails
+        log.info("User found: {}", user.getUsername());
+        log.info("Hashed password from DB: {}", user.getPassword());
+
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUsername())
-                .password(user.getPassword())
-                .roles(user.getRoles().toArray(new String[0])) // Convert roles to array
+                .password(user.getPassword()) // Hashed password from DB
+                .roles("USER") // Example role
                 .build();
     }
+
 
     // Retrieve a user for app-specific use-cases (like API user info)
     public Optional<User> findByUsername(String username)
