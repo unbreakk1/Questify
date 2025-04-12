@@ -3,6 +3,7 @@ package org.example.backend.controller;
 import org.example.backend.dto.BossResponse;
 import org.example.backend.dto.DamageRequest;
 import org.example.backend.entity.Boss;
+import org.example.backend.entity.User;
 import org.example.backend.service.BossService;
 import org.example.backend.service.UserService;
 import org.springframework.http.HttpStatus;
@@ -29,34 +30,46 @@ public class BossController
     @ResponseStatus(HttpStatus.OK)
     public BossResponse getActiveBoss(Authentication authentication)
     {
-        String userId = authentication.getName();
-        return bossService.getActiveBoss(userId);
+        // Get identifier (could be username or _id)
+        String identifier = authentication.getName();
+        User user = userService.getUserBasicDetails(identifier); // Resolve user safely
+        return bossService.getActiveBoss(user.getId()); // Use the MongoDB _id
     }
+
 
     @PutMapping("/attack")
     @ResponseStatus(HttpStatus.OK)
     public BossResponse attackBoss(Authentication authentication, @RequestBody DamageRequest damageRequest)
     {
-        String userId = authentication.getName();
-        return bossService.dealDamage(userId, damageRequest.getDamage());
+        // Get identifier (username or _id)
+        String identifier = authentication.getName();
+        User user = userService.getUserBasicDetails(identifier); // Resolve user safely
+        return bossService.dealDamage(user.getId(), damageRequest.getDamage()); // Use the _id for damage logic
     }
+
 
     @GetMapping("/selection")
     @ResponseStatus(HttpStatus.OK)
     public List<Boss> getBossSelection(Authentication authentication)
     {
-        String userId = authentication.getName();
-        int userLevel = userService.getUserBasicDetails(userId).getLevel();
-        return bossService.getBossSelection(userLevel);
+        // Get identifier (username or _id)
+        String identifier = authentication.getName();
+        User user = userService.getUserBasicDetails(identifier); // Safely resolve user
+        return bossService.getBossSelection(user.getLevel()); // Pass user level
     }
+
 
     @PostMapping("/select/{bossId}")
     @ResponseStatus(HttpStatus.OK)
     public String selectBoss(Authentication authentication, @PathVariable String bossId)
     {
-        String userId = authentication.getName();
-        return "Boss successfully selected for user " + userId;
+        // Get identifier
+        String identifier = authentication.getName();
+        User user = userService.getUserBasicDetails(identifier); // Resolve user safely
+        // Custom logic for selecting the boss
+        return "Boss successfully selected for user " + user.getUsername();
     }
+
 
     @PostMapping("/fight/{bossId}")
     @ResponseStatus(HttpStatus.OK)
@@ -66,8 +79,9 @@ public class BossController
         {
             return "Boss fight started!";
         }
-        throw new IllegalStateException("Could not start fight. Please try again."); // Will map to 409 Conflict in a handler
+        throw new IllegalStateException("Could not start fight. Please try again."); // Will map to 409 Conflict
     }
+
 
     @ExceptionHandler({IllegalArgumentException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)

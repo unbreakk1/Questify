@@ -4,6 +4,7 @@ import org.example.backend.dto.BossResponse;
 import org.example.backend.entity.Boss;
 import org.example.backend.entity.User;
 import org.example.backend.repository.BossRepository;
+import org.example.backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -15,20 +16,29 @@ public class BossService
 
     private final BossRepository bossRepository;
     private final UserService userService;
+    private final UserRepository userRepository;
 
-    public BossService(BossRepository bossRepository, UserService userService)
+    public BossService(BossRepository bossRepository, UserService userService, UserRepository userRepository)
     {
         this.bossRepository = bossRepository;
         this.userService = userService;
+        this.userRepository = userRepository;
     }
 
     /**
      * Fetches the active boss by its ID and maps it to a DTO.
      */
-    public BossResponse getActiveBoss(String bossId)
+    public BossResponse getActiveBoss(String identifier)
     {
-        Boss boss = bossRepository.findById(bossId)
-                .orElseThrow(() -> new IllegalArgumentException("Boss with the given ID not found."));
+        User user = userService.getUserBasicDetails(identifier); // Resolve user
+        String currentBossId = user.getCurrentBossId();
+        if (currentBossId == null)
+        {
+            throw new IllegalArgumentException("User is not currently fighting any boss.");
+        }
+
+        Boss boss = bossRepository.findById(currentBossId)
+                .orElseThrow(() -> new IllegalArgumentException("Boss with ID '" + currentBossId + "' not found."));
 
         return new BossResponse(
                 boss.getId(),
@@ -38,28 +48,37 @@ public class BossService
                 boss.isDefeated()
         );
     }
+
 
     /**
      * Simulates dealing damage to a boss.
      * This method reduces the boss's health, and if its health drops to 0, marks it as defeated.
      */
-    public BossResponse dealDamage(String bossId, int damage)
+    public BossResponse dealDamage(String identifier, int damage)
     {
-        Boss boss = bossRepository.findById(bossId)
-                .orElseThrow(() -> new IllegalArgumentException("Boss with the given ID not found."));
-
-        // Apply damage
-        int updatedHealth = boss.getCurrentHealth() - damage;
-        boss.setCurrentHealth(Math.max(0, updatedHealth)); // Ensure health doesn't drop below 0
-
-        // Check if the boss is now defeated
-        if (boss.getCurrentHealth() <= 0)
+        User user = userService.getUserBasicDetails(identifier); // Resolve user
+        String currentBossId = user.getCurrentBossId();
+        if (currentBossId == null)
         {
-            boss.setDefeated(true);
-
+            throw new IllegalArgumentException("User is not currently fighting any boss.");
         }
 
-        bossRepository.save(boss);
+        Boss boss = bossRepository.findById(currentBossId)
+                .orElseThrow(() -> new IllegalArgumentException("Boss with ID '" + currentBossId + "' not found."));
+
+        // Deal damage logic
+        int newHealth = boss.getCurrentHealth() - damage;
+        if (newHealth <= 0)
+        {
+            boss.setDefeated(true);
+            boss.setCurrentHealth(0); // Mark boss as defeated
+            bossRepository.save(boss);
+            handleBossDefeat(boss, user.getId()); // Logic for handling boss defeat
+        } else
+        {
+            boss.setCurrentHealth(newHealth);
+            bossRepository.save(boss);
+        }
 
         return new BossResponse(
                 boss.getId(),
@@ -69,6 +88,7 @@ public class BossService
                 boss.isDefeated()
         );
     }
+
 
     /**
      * Fetch a selection of bosses eligible for the user based on their level.
@@ -96,7 +116,7 @@ public class BossService
         // Revive defeated bosses when fewer than 3-4 bosses are available
         while (availableBosses.size() < 4 && !defeatedBosses.isEmpty())
         {
-            Boss bossToRevive = defeatedBosses.remove(0);
+            Boss bossToRevive = defeatedBosses.removeFirst();
             reviveBoss(bossToRevive);
             availableBosses.add(bossToRevive);
         }
@@ -142,55 +162,21 @@ public class BossService
                 .orElseThrow(() -> new IllegalArgumentException("Boss with the given ID not found."));
 
         // Check if the boss is already defeated
-        if (boss.isDefeated())
-        {
-            return false; // Cannot initiate a fight with a defeated boss
-        }
-        return true;
+        return !boss.isDefeated(); // Cannot initiate a fight with a defeated boss
     }
 
-    private void handleBossDefeat(Boss boss, String userId) {
-        // Mark the boss as defeated
-        boss.setDefeated(true);
-        bossRepository.save(boss); // Save the updated boss
+    private void handleBossDefeat(Boss boss, String identifier) {
+        User user = userService.getUserBasicDetails(identifier); // Resolve user
 
-        // Fetch the user
-        User user = userService.getUserBasicDetails(userId);
+        int goldReward = calculateGoldRewardForBoss(boss); // Calculate reward
+        user.setGold(user.getGold() + goldReward); // Update user gold
+        user.setCurrentBossId(null); // Clear current boss
+        user.addBadge(boss.getRewards().getBadge()); // Grant reward badge
+        userRepository.save(user); // Save updated user
 
-        // Extract rewards from the boss
-        Boss.Rewards rewards = boss.getRewards();
-
-        // Update XP and level
-        int updatedXp = user.getExperience();
-        int updatedLevel = user.getLevel();
-        if (rewards != null) {
-            updatedXp += rewards.getXp();
-
-            // Level-up logic
-            while (updatedXp >= calculateXpThresholdForLevel(updatedLevel)) {
-                updatedXp -= calculateXpThresholdForLevel(updatedLevel);
-                updatedLevel++;
-            }
-
-            // Call `updateUserDetails` for XP and level updates
-            userService.updateUserDetails(userId, updatedXp, updatedLevel, null);
-        }
-
-        // Update Gold (Virtual Currency)
-        int goldReward = calculateGoldRewardForBoss(boss);
-        user.setGold(user.getGold() + goldReward); // Update user instance with new Gold
-
-        // Award Badge for First Time Completion
-        if (rewards != null && rewards.getBadge() != null) {
-            String badge = rewards.getBadge();
-            if (!user.hasBadge(badge)) { // Award badge only if the user doesn't already have it
-                user.addBadge(badge);
-            }
-        }
-
-        // Trigger additional events (notifications, etc.)
-        triggerDefeatEvents(userId, boss, goldReward);
+        triggerDefeatEvents(user.getId(), boss, goldReward); // Additional events
     }
+
 
 
     /**
