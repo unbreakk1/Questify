@@ -208,4 +208,11 @@ public class BossService
                 goldReward + " Gold!";
         System.out.println(message); // Replace with an actual notification mechanism (e.g., in-app or email)
     }
+
+    public Boss getBossById(String bossId)
+    {
+        return bossRepository.findById(bossId)
+                .orElseThrow(() -> new IllegalArgumentException("Boss not found with ID: " + bossId));
+    }
+
 }

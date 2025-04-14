@@ -195,5 +195,9 @@ public class UserService implements UserDetailsService
                 .orElseThrow(() -> new IllegalArgumentException("User with username '" + identifier + "' not found."));
     }
 
+    public void saveUser(User user)
+    {
+        userRepository.save(user); // Save the updated user to the database
+    }
 
 }
