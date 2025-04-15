@@ -1,68 +1,69 @@
-import {Card, CardContent, Typography, Checkbox, Box, Button} from '@mui/material';
-import {Habit} from "../../api/HabitsAPI.tsx";
+import { Card, CardContent, Typography, Checkbox, Box, Button } from "@mui/material";
+import { Habit } from "../../api/HabitsAPI.tsx";
 
-interface HabitCardProps
-{
+interface HabitCardProps {
     habit: Habit;
     onComplete: (habitId: string) => void;
-    onReset: (habitId: string) => void; // Add reset handler
     onDelete: (habitId: string) => void;
+    onReset: (habitId: string) => void; // Add reset handler
 }
 
-const HabitCard: React.FC<HabitCardProps> = ({habit, onComplete, onDelete}) =>
-{
-    const
-        {
-            title,
-            frequency,
-            difficulty,
-            streak = 0,
-            lastCompletedDate,
-        } = habit;
+const HabitCard: React.FC<HabitCardProps> = ({ habit, onComplete, onDelete }) => {
+    const { title, streak = 0, lastCompletedDate } = habit;
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split("T")[0];
     const isCompletedToday = lastCompletedDate === today;
 
     return (
         <Card
             sx={{
-                margin: '8px 0',
-                padding: '16px',
-                width: '100%',
-                opacity: isCompletedToday ? 0.6 : 1, // Make completed cards less opaque
+                margin: "8px 0", // Space between habit cards
+                padding: "12px", // Adjust padding for a thinner layout
+                width: "100%", // Stretch the card to full container width
+                height: "64px", // Limit the height to make it thinner
+                display: "flex", // Flex layout to align content on a single row
+                alignItems: "center", // Center contents vertically
+                justifyContent: "space-between", // Space out contents horizontally
+                backgroundColor: isCompletedToday ? "#f5f5f5" : "darkgray", // Subtle effect for completed cards
+                opacity: isCompletedToday ? 0.8 : 1, // Slightly lower opacity for completed cards
             }}
         >
-        <CardContent>
-                <Typography variant="h6">{title}</Typography>
-                <Typography variant="body2">Frequency: {frequency}</Typography>
-                <Typography variant="body2">Difficulty: {difficulty}</Typography>
-                <Typography variant="body2">Streak: {streak} days</Typography>
-                <Box display="flex" alignItems="center">
-                    <Checkbox
-                        checked={isCompletedToday} // Checkbox stays checked if completed
-                        onChange={() => onComplete(habit.id)}
-                        disabled={isCompletedToday} // Disable if it's completed
-                    />
-                    {isCompletedToday && (
-                        <Typography variant="body2" color="textSecondary">
-                            Completed today!
-                        </Typography>
-                    )}
-                </Box>
-            <Button
-                onClick={() => onDelete(habit.id)} // Hook up the delete handler
-                color="error"
-                variant="outlined"
-                size="small"
-                style={{ marginTop: '8px' }}
+            <CardContent
+                sx={{
+                    padding: "0 16px", // Adjusted padding for content
+                    display: "flex",
+                    flex: 1,
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                }}
             >
-                Delete
-            </Button>
+                {/* Left Content */}
+                <Box>
+                    <Typography variant="h6">{title}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        Streak: {streak} days
+                    </Typography>
+                </Box>
 
-        </CardContent>
+                {/* Right Content */}
+                <Box display="flex" alignItems="center" gap={2}>
+                    <Checkbox
+                        checked={isCompletedToday} // Checkbox stays checked when completed
+                        onChange={() => onComplete(habit.id)}
+                        disabled={isCompletedToday} // Disable if already completed
+                    />
+                    <Button
+                        onClick={() => onDelete(habit.id)} // Hook up the delete handler
+                        color="error"
+                        variant="outlined"
+                        size="small"
+                    >
+                        Delete
+                    </Button>
+                </Box>
+            </CardContent>
         </Card>
     );
 };
-
 
 export default HabitCard;

@@ -1,107 +1,123 @@
-// DashboardPage.tsx
-import React, {useState, useEffect} from 'react';
-import {Grid, Box, Typography, Card, CardContent, Button, LinearProgress} from '@mui/material';
+import React, { useState, useEffect } from "react";
+import {
+    Box,
+    Typography,
+    Modal,
+    Fab,
+    AppBar,
+    Toolbar,
+    Button,
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
 
-import TaskCard from '../components/tasks/TaskCard';
-import HabitCard from '../components/habits/HabitCard';
-import UserInfoCard from '../components/users/UserInfoCard';
-import {getAllTasks, completeTask, deleteTask, Task} from '../api/TasksAPI';
-import {getAllHabits, completeHabit, deleteHabit, Habit} from '../api/HabitsAPI';
-import {getBossSelection, attackBoss, Boss} from '../api/BossesAPI';
+import HabitForm from "../components/habits/HabitForm";
+import TaskForm from "../components/tasks/TaskForm";
+import TaskCard from "../components/tasks/TaskCard";
+import HabitCard from "../components/habits/HabitCard";
+import { getAllTasks, completeTask, deleteTask, Task } from "../api/TasksAPI";
+import { getAllHabits, completeHabit, deleteHabit, Habit } from "../api/HabitsAPI";
 
-
-interface User
-{
-    username: string;
-    xp: number;
-    gold: number;
-    level: number;
-}
-
-const DashboardPage: React.FC = () =>
-{
+const DashboardPage: React.FC = () => {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [habits, setHabits] = useState<Habit[]>([]);
-    const [currentBoss, setCurrentBoss] = useState<Boss | null>(null);
-    const [user, setUser] = useState<User>({
-        username: 'Hero',
-        xp: 1200,
-        gold: 200,
-        level: 5,
-    });
+    const [openModal, setOpenModal] = useState<"task" | "habit" | null>(null);
 
-    useEffect(() =>
-    {
-        const fetchData = async () =>
-        {
+    useEffect(() => {
+        const fetchData = async () => {
             const tasksData = await getAllTasks();
             const habitsData = await getAllHabits();
-            const bossSelection = await getBossSelection();
-
-            // Find an active boss (one that isn't defeated)
-            const activeBoss = bossSelection.find((boss) => !boss.defeated);
             setTasks(tasksData);
             setHabits(habitsData);
-            setCurrentBoss(activeBoss || null);
         };
-
         fetchData();
     }, []);
 
-    const handleCompleteTask = async (taskId: string) =>
-    {
+    const handleCompleteTask = async (taskId: string) => {
         await completeTask(taskId);
         const updatedTasks = await getAllTasks();
         setTasks(updatedTasks);
-
-        // Attack the boss when completing tasks
-        if (currentBoss)
-        {
-            await handleAttackBoss(10); // Example damage value
-        }
     };
 
-    const handleDeleteTask = async (taskId: string) =>
-    {
+    const handleDeleteTask = async (taskId: string) => {
         await deleteTask(taskId);
         setTasks(tasks.filter((task) => task.id !== taskId));
     };
 
-    const handleCompleteHabit = async (habitId: string) =>
-    {
+    const handleCompleteHabit = async (habitId: string) => {
         await completeHabit(habitId);
         const updatedHabits = await getAllHabits();
         setHabits(updatedHabits);
-
-        // Attack the boss when completing habits
-        if (currentBoss)
-        {
-            await handleAttackBoss(5); // Example lower damage value
-        }
     };
 
-    const handleDeleteHabit = async (habitId: string) =>
-    {
+    const handleDeleteHabit = async (habitId: string) => {
         await deleteHabit(habitId);
         setHabits(habits.filter((habit) => habit.id !== habitId));
     };
 
-    const handleAttackBoss = async (damage: number) =>
-    {
-        if (!currentBoss) return;
-
-        const updatedBoss = await attackBoss(damage); // API call with damage dealt
-        setCurrentBoss(updatedBoss.boss); // Update the boss's health
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        window.location.href = "/";
     };
 
     return (
-        <Box padding={2}>
-            <Grid container spacing={2}>
-                <Grid item xs={12}>
-                    <UserInfoCard user={user} onUserUpdate={setUser}/>
-                </Grid>
-                <Grid item xs={6}>
-                    <Typography variant="h5">Tasks</Typography>
+        <>
+            {/* AppBar */}
+            <AppBar position="fixed" sx={{ backgroundColor: "#1e1e1e" }}>
+                <Toolbar>
+                    <Typography variant="h6" sx={{ flexGrow: 1, pl: 2 }}>
+                        Questify Dashboard
+                    </Typography>
+                    <Button color="inherit" onClick={handleLogout}>
+                        Logout
+                    </Button>
+                </Toolbar>
+            </AppBar>
+
+            {/* Main Content */}
+            <Box
+                component="main"
+                sx={{
+                    pt: 10, // Push content below AppBar
+                    width: "100vw", // Occupy the entire screen width
+                    minHeight: "100vh", // Make the content fill the entire vertical space if needed
+                    display: "flex", // Flex to align tasks and habits
+                    justifyContent: "space-between", // Spread tasks and habits evenly
+                    alignItems: "flex-start", // Align at the top near AppBar
+                    px: 4, // Add padding to the left and right edges
+                    boxSizing: "border-box", // Ensure padding is considered within the layout
+                }}
+            >
+                {/* Tasks Section */}
+                <Box
+                    sx={{
+                        flex: 1, // Evenly share horizontal space
+                        padding: 2,
+                        backgroundColor: "#f4f4f4", // Light gray background
+                        borderRadius: 2,
+                        marginRight: "16px", // Add horizontal gap between tasks and habits
+                    }}
+                >
+                    {/* Tasks Header */}
+                    <Box
+                        sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            marginBottom: 2,
+                        }}
+                    >
+                        <Typography variant="h5">Tasks</Typography>
+                        <Fab
+                            size="small"
+                            color="primary"
+                            aria-label="add-task"
+                            onClick={() => setOpenModal("task")}
+                        >
+                            <AddIcon />
+                        </Fab>
+                    </Box>
+
+                    {/* Task Cards */}
                     {tasks.map((task) => (
                         <TaskCard
                             key={task.id}
@@ -110,48 +126,93 @@ const DashboardPage: React.FC = () =>
                             onDelete={handleDeleteTask}
                         />
                     ))}
-                </Grid>
-                <Grid item xs={6}>
-                    <Typography variant="h5">Habits</Typography>
+                </Box>
+
+                {/* Habits Section */}
+                <Box
+                    sx={{
+                        flex: 1, // Evenly share horizontal space
+                        padding: 2,
+                        backgroundColor: "#f4f4f4", // Light gray background
+                        borderRadius: 2,
+                        marginLeft: "16px", // Add the gap
+                    }}
+                >
+                    {/* Habits Header */}
+                    <Box
+                        sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            marginBottom: 2,
+                        }}
+                    >
+                        <Typography variant="h5">Habits</Typography>
+                        <Fab
+                            size="small"
+                            color="secondary"
+                            aria-label="add-habit"
+                            onClick={() => setOpenModal("habit")}
+                        >
+                            <AddIcon />
+                        </Fab>
+                    </Box>
+
+                    {/* Habit Cards */}
                     {habits.map((habit) => (
                         <HabitCard
                             key={habit.id}
                             habit={habit}
                             onComplete={handleCompleteHabit}
                             onDelete={handleDeleteHabit}
-                            onReset={() => console.log(`Habit ${habit.id} reset`)}
+                            onReset={async (habitId) => {
+                                await completeHabit(habitId);
+                                const updatedHabits = await getAllHabits();
+                                setHabits(updatedHabits);
+                            }}
                         />
                     ))}
-                </Grid>
+                </Box>
+            </Box>
 
-                {/* Boss Section */}
-                {currentBoss && (
-                    <Grid item xs={12}>
-                        <Card>
-                            <CardContent>
-                                <Typography variant="h5">{currentBoss.name}</Typography>
-                                <Typography>
-                                    Health: {currentBoss.currentHealth}/{currentBoss.maxHealth}
-                                </Typography>
-                                <LinearProgress
-                                    variant="determinate"
-                                    value={(currentBoss.currentHealth / currentBoss.maxHealth) * 100}
-                                    sx={{marginY: 2}}
-                                />
-                                <Button
-                                    variant="contained"
-                                    color="secondary"
-                                    onClick={() => handleAttackBoss(20)} // Manual attack option
-                                    disabled={currentBoss.currentHealth <= 0}
-                                >
-                                    Attack Boss
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                )}
-            </Grid>
-        </Box>
+            {/* Modal for Adding */}
+            <Modal
+                open={Boolean(openModal)}
+                onClose={() => setOpenModal(null)}
+            >
+                <Box
+                    sx={{
+                        position: "absolute",
+                        top: "50%",
+                        left: "50%",
+                        transform: "translate(-50%, -50%)",
+                        backgroundColor: "white",
+                        boxShadow: 24,
+                        padding: 4,
+                        borderRadius: 2,
+                        minWidth: "300px",
+                    }}
+                >
+                    {openModal === "task" ? (
+                        <TaskForm
+                            onTaskCreated={async () => {
+                                const updatedTasks = await getAllTasks();
+                                setTasks(updatedTasks);
+                                setOpenModal(null);
+                            }}
+                        />
+                    ) : (
+                        <HabitForm
+                            onHabitCreated={async () => {
+                                const updatedHabits = await getAllHabits();
+                                setHabits(updatedHabits);
+                                setOpenModal(null);
+                            }}
+                        />
+                    )}
+                </Box>
+            </Modal>
+        </>
     );
 };
 
