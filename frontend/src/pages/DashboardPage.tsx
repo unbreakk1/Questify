@@ -6,10 +6,13 @@ import {
     Fab,
     AppBar,
     Toolbar,
-    Button,
+    Button, CircularProgress,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 
+
+import { getUsernameFromToken, getUserInfo } from "../utils/UserAPI.tsx";
+import UserDetailsModal from "../components/users/UserDetailsModal.tsx";
 import HabitForm from "../components/habits/HabitForm";
 import TaskForm from "../components/tasks/TaskForm";
 import TaskCard from "../components/tasks/TaskCard";
@@ -21,6 +24,11 @@ const DashboardPage: React.FC = () => {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [habits, setHabits] = useState<Habit[]>([]);
     const [openModal, setOpenModal] = useState<"task" | "habit" | null>(null);
+    const [userStats, setUserStats] = useState<{ username: string; gold: number; level: number } | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [openUserModal, setOpenUserModal] = useState(false);
+
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -28,9 +36,30 @@ const DashboardPage: React.FC = () => {
             const habitsData = await getAllHabits();
             setTasks(tasksData);
             setHabits(habitsData);
+
+            const username = getUsernameFromToken();
+            if (!username) {
+                console.error("Username not found in token.");
+                return;
+            }
+
+            try {
+                const userInfo = await getUserInfo(username);
+                setUserStats({
+                    username: userInfo.username,
+                    gold: userInfo.gold,
+                    level: userInfo.level,
+                });
+            } catch (error) {
+                console.error("Failed to fetch user stats:", error);
+            } finally {
+                setLoading(false); // Ensure loading state is turned off
+            }
         };
+
         fetchData();
     }, []);
+
 
     const handleCompleteTask = async (taskId: string) => {
         await completeTask(taskId);
@@ -67,11 +96,37 @@ const DashboardPage: React.FC = () => {
                     <Typography variant="h6" sx={{ flexGrow: 1, pl: 2 }}>
                         Questify Dashboard
                     </Typography>
+                    {loading ? (
+                        <CircularProgress size={24} color="inherit" />
+                    ) : userStats ? (
+                        <Box display="flex" alignItems="center">
+                            <Typography
+                                variant="body1"
+                                sx={{
+                                    mr: 2,
+                                    cursor: "pointer",
+                                    textDecoration: "underline",
+                                }}
+                                onClick={() => setOpenUserModal(true)} // Open modal on username click
+                            >
+                                Welcome, {userStats.username}
+                            </Typography>
+                            <Typography variant="body2" sx={{ mx: 2 }}>
+                                Gold: {userStats.gold}
+                            </Typography>
+                            <Typography variant="body2">Level: {userStats.level}</Typography>
+                        </Box>
+                    ) : (
+                        <Typography variant="body2" color="error">
+                            Failed to load user stats
+                        </Typography>
+                    )}
                     <Button color="inherit" onClick={handleLogout}>
                         Logout
                     </Button>
                 </Toolbar>
             </AppBar>
+
 
             {/* Main Content */}
             <Box
@@ -174,6 +229,13 @@ const DashboardPage: React.FC = () => {
                     ))}
                 </Box>
             </Box>
+
+            <UserDetailsModal
+                open={openUserModal} // Use the state for modal visibility
+                onClose={() => setOpenUserModal(false)} // Properly toggle modal off
+                username={userStats?.username} // Pass the username prop here
+            />
+
 
             {/* Modal for Adding */}
             <Modal
