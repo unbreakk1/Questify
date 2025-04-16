@@ -12,6 +12,7 @@ import {
 import {loginUser} from '../../api/Auth';
 import axios, {AxiosError} from "axios";
 import {ErrorResponse} from "../../types/ErrorResponse.tsx";
+import {decodeToken, isTokenExpired} from "../../utils/AuthUtils.tsx";
 
 interface LoginDialogProps
 {
@@ -26,34 +27,36 @@ const LoginDialog: React.FC<LoginDialogProps> = ({open, onClose}) =>
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    const handleLogin = async () =>
-    {
+    const handleLogin = async () => {
         setError(''); // Clear error state
-        try
-        {
-            const token = await loginUser(username, password); // Call loginUser from Auth.tsx
-            localStorage.setItem('token', token); // Save JWT in localStorage
-            navigate('/dashboard'); // Redirect to dashboard on success
+        try {
+            const token = await loginUser(username, password); // Fetch JWT token from API
+
+            // Decode the token and validate it before using
+            const decodedToken = decodeToken(token);
+            if (!decodedToken) throw new Error('Failed to decode the authentication token.');
+            console.log('decodedToken', decodedToken);
+            // Optionally, check if the token has already expired
+            if (isTokenExpired(token)) throw new Error('The authentication token is already expired.');
+
+            // If all checks pass, proceed with storing the token and redirect
+            localStorage.setItem('token', token.trim());      // Save JWT in local storage
+            console.log('username', decodedToken.sub);
+            localStorage.setItem('username', decodedToken.sub); // Save username from token
+            navigate('/dashboard');                          // Redirect to dashboard
             onClose();
-
-        }
-        catch (err)
-        {
-            // Check if the error is an AxiosError
-            if (axios.isAxiosError(err))
-            {
+        } catch (err) {
+            // Handle different error types
+            if (axios.isAxiosError(err)) {
                 const axiosError = err as AxiosError<ErrorResponse>;
-
-                // Extract message from AxiosError<ErrorResponse>
                 const errorMessage = axiosError.response?.data?.message || 'Login failed. Please try again.';
-                setError(errorMessage); // Set the error message
-            } else
-            {
-                // Handle non-Axios errors
-                setError('An unexpected error occurred. Please try again.');
+                setError(errorMessage);
+            } else {
+                setError(err instanceof Error ? err.message : 'An unexpected error occurred. Please try again.');
             }
         }
     };
+
 
 
     return (
