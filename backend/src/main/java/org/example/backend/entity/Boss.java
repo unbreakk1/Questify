@@ -16,9 +16,21 @@ public class Boss {
     private Rewards rewards; // Embedded rewards object (e.g., XP, badges)
 
     // Embedded Rewards class
-    public static class Rewards {
+    public static class Rewards
+    {
+        private int gold;
         private int xp; // Experience points
         private String badge; // Badge or reward name
+
+        public int getGold()
+        {
+            return gold;
+        }
+
+        public void setGold(int gold)
+        {
+            this.gold = gold;
+        }
 
         public int getXp() {
             return xp;

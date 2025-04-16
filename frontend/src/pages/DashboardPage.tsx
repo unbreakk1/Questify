@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, {useState, useEffect} from "react";
 import {
     Box,
     Typography,
@@ -11,49 +11,66 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 
 
-import { getUsernameFromToken, getUserInfo } from "../utils/UserAPI.tsx";
+import {getUsernameFromToken, getUserInfo} from "../utils/UserAPI.tsx";
 import UserDetailsModal from "../components/users/UserDetailsModal.tsx";
 import HabitForm from "../components/habits/HabitForm";
 import TaskForm from "../components/tasks/TaskForm";
 import TaskCard from "../components/tasks/TaskCard";
 import HabitCard from "../components/habits/HabitCard";
-import { getAllTasks, completeTask, deleteTask, Task } from "../api/TasksAPI";
-import { getAllHabits, completeHabit, deleteHabit, Habit } from "../api/HabitsAPI";
+import {getAllTasks, completeTask, deleteTask, Task} from "../api/TasksAPI";
+import {getAllHabits, completeHabit, deleteHabit, Habit} from "../api/HabitsAPI";
+import {getActiveBoss, attackBoss, BossResponse} from "../api/BossesAPI";
+import BossCard from "../components/bosses/BossCard.tsx";
 
-const DashboardPage: React.FC = () => {
+
+const DashboardPage: React.FC = () =>
+{
     const [tasks, setTasks] = useState<Task[]>([]);
     const [habits, setHabits] = useState<Habit[]>([]);
     const [openModal, setOpenModal] = useState<"task" | "habit" | null>(null);
     const [userStats, setUserStats] = useState<{ username: string; gold: number; level: number } | null>(null);
     const [loading, setLoading] = useState(true);
     const [openUserModal, setOpenUserModal] = useState(false);
+    const [boss, setBoss] = useState<BossResponse | null>(null); // Store current boss
+    const [loadingBoss, setLoadingBoss] = useState(true); // Track boss loading state
 
 
-
-    useEffect(() => {
-        const fetchData = async () => {
+    useEffect(() =>
+    {
+        const fetchData = async () =>
+        {
             const tasksData = await getAllTasks();
             const habitsData = await getAllHabits();
+            const activeBoss = await getActiveBoss();
+
             setTasks(tasksData);
             setHabits(habitsData);
+            console.log("Active Boss:", activeBoss);
+            setBoss(activeBoss);
+
 
             const username = getUsernameFromToken();
-            if (!username) {
+            if (!username)
+            {
                 console.error("Username not found in token.");
                 return;
             }
 
-            try {
+            try
+            {
                 const userInfo = await getUserInfo(username);
                 setUserStats({
                     username: userInfo.username,
                     gold: userInfo.gold,
                     level: userInfo.level,
                 });
-            } catch (error) {
+            } catch (error)
+            {
                 console.error("Failed to fetch user stats:", error);
-            } finally {
+            } finally
+            {
                 setLoading(false); // Ensure loading state is turned off
+                setLoadingBoss(false);
             }
         };
 
@@ -61,29 +78,90 @@ const DashboardPage: React.FC = () => {
     }, []);
 
 
-    const handleCompleteTask = async (taskId: string) => {
-        await completeTask(taskId);
-        const updatedTasks = await getAllTasks();
-        setTasks(updatedTasks);
+    const handleCompleteTask = async (taskId: string) =>
+    {
+        try
+        {
+            await completeTask(taskId);
+            const updatedTasks = await getAllTasks();
+            setTasks(updatedTasks);
+
+            if (boss)
+            {
+                const updatedBoss = await attackBoss(500); // Example: Completing task deals 10 damage
+                setBoss(updatedBoss);
+
+                if (updatedBoss.currentHealth === 0)
+                {
+                    alert("Boss defeated! Rewards unlocked!");
+                    const refreshedBossResponse = await getActiveBoss(); // Get a new boss after defeat
+                    const refreshedBoss: Boss = {
+                        id: refreshedBossResponse.id,
+                        name: refreshedBossResponse.name,
+                        maxHealth: refreshedBossResponse.maxHealth,
+                        currentHealth: refreshedBossResponse.currentHealth,
+                        levelRequirement: refreshedBossResponse.levelRequirement,
+                        rewards: refreshedBossResponse.rewards,
+                    };
+                    setBoss(refreshedBoss);
+                }
+            }
+        }
+        catch (error)
+        {
+            console.error("Failed to complete task or process boss damage:", error);
+        }
     };
 
-    const handleDeleteTask = async (taskId: string) => {
+    const handleDeleteTask = async (taskId: string) =>
+    {
         await deleteTask(taskId);
         setTasks(tasks.filter((task) => task.id !== taskId));
     };
 
-    const handleCompleteHabit = async (habitId: string) => {
-        await completeHabit(habitId);
-        const updatedHabits = await getAllHabits();
-        setHabits(updatedHabits);
+    const handleCompleteHabit = async (habitId: string) =>
+    {
+        try
+        {
+            await completeHabit(habitId);
+            const updatedHabits = await getAllHabits();
+            setHabits(updatedHabits);
+            if (boss)
+            {
+                const updatedBossResponse = await attackBoss(750); // Example: Completing habit deals 5 damage
+                const updatedBoss: Boss = {
+                    id: updatedBossResponse.id,
+                    name: updatedBossResponse.name,
+                    maxHealth: updatedBossResponse.maxHealth,
+                    currentHealth: updatedBossResponse.currentHealth,
+                    levelRequirement: updatedBossResponse.levelRequirement,
+                    rewards: updatedBossResponse.rewards,
+                };
+                setBoss(updatedBoss);
+
+                if (updatedBoss.currentHealth === 0)
+                {
+                    alert("Boss defeated! Rewards unlocked!");
+                    const refreshedBoss = await getActiveBoss(); // Get a new boss after defeat
+                    setBoss(refreshedBoss);
+                }
+            }
+        }
+        catch (error)
+        {
+            console.error("Failed to complete habit or process boss damage:", error);
+        }
     };
 
-    const handleDeleteHabit = async (habitId: string) => {
+
+    const handleDeleteHabit = async (habitId: string) =>
+    {
         await deleteHabit(habitId);
         setHabits(habits.filter((habit) => habit.id !== habitId));
     };
 
-    const handleLogout = () => {
+    const handleLogout = () =>
+    {
         localStorage.removeItem("token");
         window.location.href = "/";
     };
@@ -91,13 +169,13 @@ const DashboardPage: React.FC = () => {
     return (
         <>
             {/* AppBar */}
-            <AppBar position="fixed" sx={{ backgroundColor: "#1e1e1e" }}>
+            <AppBar position="fixed" sx={{backgroundColor: "#1e1e1e"}}>
                 <Toolbar>
-                    <Typography variant="h6" sx={{ flexGrow: 1, pl: 2 }}>
+                    <Typography variant="h6" sx={{flexGrow: 1, pl: 2}}>
                         Questify Dashboard
                     </Typography>
                     {loading ? (
-                        <CircularProgress size={24} color="inherit" />
+                        <CircularProgress size={24} color="inherit"/>
                     ) : userStats ? (
                         <Box display="flex" alignItems="center">
                             <Typography
@@ -111,7 +189,7 @@ const DashboardPage: React.FC = () => {
                             >
                                 Welcome, {userStats.username}
                             </Typography>
-                            <Typography variant="body2" sx={{ mx: 2 }}>
+                            <Typography variant="body2" sx={{mx: 2}}>
                                 Gold: {userStats.gold}
                             </Typography>
                             <Typography variant="body2">Level: {userStats.level}</Typography>
@@ -142,6 +220,24 @@ const DashboardPage: React.FC = () => {
                     boxSizing: "border-box", // Ensure padding is considered within the layout
                 }}
             >
+                <Box
+                    sx={{
+                        mb: 4,
+                        padding: 2,
+                        backgroundColor: "#f4f4f4",
+                        borderRadius: 2,
+                    }}
+                >
+                    <Typography variant="h5">Active Boss</Typography>
+                    {loadingBoss ? (
+                        <CircularProgress/>
+                    ) : boss ? (
+                        <BossCard boss={boss}/>
+                    ) : (
+                        <Typography>No active boss! Complete tasks or habits to summon one!</Typography>
+                    )}
+                </Box>
+
                 {/* Tasks Section */}
                 <Box
                     sx={{
@@ -168,7 +264,7 @@ const DashboardPage: React.FC = () => {
                             aria-label="add-task"
                             onClick={() => setOpenModal("task")}
                         >
-                            <AddIcon />
+                            <AddIcon/>
                         </Fab>
                     </Box>
 
@@ -209,7 +305,7 @@ const DashboardPage: React.FC = () => {
                             aria-label="add-habit"
                             onClick={() => setOpenModal("habit")}
                         >
-                            <AddIcon />
+                            <AddIcon/>
                         </Fab>
                     </Box>
 
@@ -220,7 +316,8 @@ const DashboardPage: React.FC = () => {
                             habit={habit}
                             onComplete={handleCompleteHabit}
                             onDelete={handleDeleteHabit}
-                            onReset={async (habitId) => {
+                            onReset={async (habitId) =>
+                            {
                                 await completeHabit(habitId);
                                 const updatedHabits = await getAllHabits();
                                 setHabits(updatedHabits);
@@ -257,7 +354,8 @@ const DashboardPage: React.FC = () => {
                 >
                     {openModal === "task" ? (
                         <TaskForm
-                            onTaskCreated={async () => {
+                            onTaskCreated={async () =>
+                            {
                                 const updatedTasks = await getAllTasks();
                                 setTasks(updatedTasks);
                                 setOpenModal(null);
@@ -265,7 +363,8 @@ const DashboardPage: React.FC = () => {
                         />
                     ) : (
                         <HabitForm
-                            onHabitCreated={async () => {
+                            onHabitCreated={async () =>
+                            {
                                 const updatedHabits = await getAllHabits();
                                 setHabits(updatedHabits);
                                 setOpenModal(null);

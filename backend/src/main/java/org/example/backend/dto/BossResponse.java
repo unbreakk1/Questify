@@ -1,5 +1,7 @@
 package org.example.backend.dto;
 
+import org.example.backend.entity.Boss.Rewards;
+
 public class BossResponse
 {
     private String id;
@@ -7,14 +9,18 @@ public class BossResponse
     private int maxHealth;
     private int currentHealth;
     private boolean defeated;
+    private Rewards rewards;
+    private boolean rare;
 
-    public BossResponse(String id, String name, int maxHealth, int currentHealth, boolean defeated)
+    public BossResponse(String id, String name, int maxHealth, int currentHealth, boolean defeated, Rewards rewards, boolean rare)
     {
         this.id = id;
         this.name = name;
         this.maxHealth = maxHealth;
         this.currentHealth = currentHealth;
         this.defeated = defeated;
+        this.rewards = rewards;
+        this.rare = rare;
     }
 
     // Getters
@@ -41,6 +47,16 @@ public class BossResponse
     public boolean isDefeated()
     {
         return defeated;
+    }
+
+    public Rewards getRewards()
+    {
+        return rewards;
+    }
+
+    public boolean isRare()
+    {
+        return rare;
     }
 }
 

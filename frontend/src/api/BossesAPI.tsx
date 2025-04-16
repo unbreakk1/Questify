@@ -17,8 +17,22 @@ export interface Boss
 
 export interface BossResponse
 {
+    id: string;
+    name: string;
+    maxHealth: number;
+    currentHealth: number;
+    levelRequirement: number;
     boss: Boss;
     message?: string;
+    defeated: boolean;
+    rare: boolean;
+    rewards: {
+        gold: number;
+        xp: number;
+        badge: string;
+    };
+
+
 }
 
 // Fetch a selection of bosses based on user's level
@@ -47,4 +61,10 @@ export const attackBoss = async (damage: number): Promise<BossResponse> =>
 {
     const response = await apiClient.put('/api/boss/attack', {damage});
     return response.data; // Return the updated boss and any related message
+};
+
+// Fetch the active boss for the user
+export const getActiveBoss = async (): Promise<BossResponse> => {
+    const response = await apiClient.get('/api/boss/active');
+    return response.data; // Return the active boss
 };

@@ -45,7 +45,10 @@ public class BossService
                 boss.getName(),
                 boss.getMaxHealth(),
                 boss.getCurrentHealth(),
-                boss.isDefeated()
+                boss.isDefeated(),
+                boss.getRewards(),
+                boss.isRare()
+
         );
     }
 
@@ -85,7 +88,9 @@ public class BossService
                 boss.getName(),
                 boss.getMaxHealth(),
                 boss.getCurrentHealth(),
-                boss.isDefeated()
+                boss.isDefeated(),
+                boss.getRewards(),
+                boss.isRare()
         );
     }
 
@@ -179,14 +184,6 @@ public class BossService
 
 
 
-    /**
-     * Calculates the XP threshold for leveling up.
-     * Here we use a simple placeholder example, but you can replace this logic with more advanced mechanics.
-     */
-    private int calculateXpThresholdForLevel(int level)
-    {
-        return 100 + (level * 50); // Example: 100 base + 50 XP per level
-    }
 
     /**
      * Calculates the gold reward for defeating a boss.
@@ -194,7 +191,7 @@ public class BossService
      */
     private int calculateGoldRewardForBoss(Boss boss)
     {
-        return boss.getLevelRequirement() * 10; // Example: 10 Gold per level requirement of the defeated boss
+        return boss.getLevelRequirement() * 100; // Example: 10 Gold per level requirement of the defeated boss
     }
 
     /**

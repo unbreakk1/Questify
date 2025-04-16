@@ -26,7 +26,7 @@ public class BossController
         this.userService = userService;
     }
 
-    @GetMapping
+    @GetMapping("/active")
     @ResponseStatus(HttpStatus.OK)
     public BossResponse getActiveBoss(Authentication authentication)
     {
