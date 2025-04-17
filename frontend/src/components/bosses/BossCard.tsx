@@ -2,7 +2,8 @@ import React from 'react';
 import { Box, Typography, LinearProgress } from '@mui/material';
 import { Boss } from '../../api/BossesAPI';
 
-interface BossCardProps {
+interface BossCardProps
+{
     boss: Boss;
 }
 

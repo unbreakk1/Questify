@@ -7,9 +7,12 @@ export interface Boss
     maxHealth: number;
     currentHealth: number;
     levelRequirement: number;
+    boss: Boss;
+    message?: string;
     defeated: boolean;
     rare: boolean;
     rewards: {
+        gold: number;
         xp: number;
         badge: string;
     };

@@ -21,7 +21,7 @@ const TaskCard: React.FC<Task> = ({ id, title, dueDate, completed, onComplete, o
                 display: "flex", // Flex layout to align content on a single row
                 alignItems: "center", // Center contents vertically
                 justifyContent: "space-between", // Space out contents horizontally
-                backgroundColor: completed ? "#f5f5f5" : "darkgray", // Subtle effect for completed tasks
+                backgroundColor: completed ? "darkgrey" : "darkgray", // Subtle effect for completed tasks
                 opacity: completed ? 0.8 : 1, // Slightly lower opacity for completed tasks
             }}
         >

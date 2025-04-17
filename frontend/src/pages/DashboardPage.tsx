@@ -95,15 +95,7 @@ const DashboardPage: React.FC = () =>
                 {
                     alert("Boss defeated! Rewards unlocked!");
                     const refreshedBossResponse = await getActiveBoss(); // Get a new boss after defeat
-                    const refreshedBoss: Boss = {
-                        id: refreshedBossResponse.id,
-                        name: refreshedBossResponse.name,
-                        maxHealth: refreshedBossResponse.maxHealth,
-                        currentHealth: refreshedBossResponse.currentHealth,
-                        levelRequirement: refreshedBossResponse.levelRequirement,
-                        rewards: refreshedBossResponse.rewards,
-                    };
-                    setBoss(refreshedBoss);
+                    setBoss(refreshedBossResponse);
                 }
             }
         }
@@ -129,17 +121,9 @@ const DashboardPage: React.FC = () =>
             if (boss)
             {
                 const updatedBossResponse = await attackBoss(750); // Example: Completing habit deals 5 damage
-                const updatedBoss: Boss = {
-                    id: updatedBossResponse.id,
-                    name: updatedBossResponse.name,
-                    maxHealth: updatedBossResponse.maxHealth,
-                    currentHealth: updatedBossResponse.currentHealth,
-                    levelRequirement: updatedBossResponse.levelRequirement,
-                    rewards: updatedBossResponse.rewards,
-                };
-                setBoss(updatedBoss);
+                setBoss(updatedBossResponse);
 
-                if (updatedBoss.currentHealth === 0)
+                if (updatedBossResponse.currentHealth === 0)
                 {
                     alert("Boss defeated! Rewards unlocked!");
                     const refreshedBoss = await getActiveBoss(); // Get a new boss after defeat
@@ -224,7 +208,7 @@ const DashboardPage: React.FC = () =>
                     sx={{
                         mb: 4,
                         padding: 2,
-                        backgroundColor: "#f4f4f4",
+                        backgroundColor: "darkgray",
                         borderRadius: 2,
                     }}
                 >
@@ -243,7 +227,7 @@ const DashboardPage: React.FC = () =>
                     sx={{
                         flex: 1, // Evenly share horizontal space
                         padding: 2,
-                        backgroundColor: "#f4f4f4", // Light gray background
+                        backgroundColor: "darkgrey", // Light gray background
                         borderRadius: 2,
                         marginRight: "16px", // Add horizontal gap between tasks and habits
                     }}
@@ -284,7 +268,7 @@ const DashboardPage: React.FC = () =>
                     sx={{
                         flex: 1, // Evenly share horizontal space
                         padding: 2,
-                        backgroundColor: "#f4f4f4", // Light gray background
+                        backgroundColor: "darkgrey", // Light gray background
                         borderRadius: 2,
                         marginLeft: "16px", // Add the gap
                     }}
