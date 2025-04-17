@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
 import java.util.Set;
 import java.time.LocalDateTime;
 
@@ -82,12 +81,6 @@ public class UserService implements UserDetailsService
                 .build();
     }
 
-
-    // Retrieve a user for app-specific use-cases (like API user info)
-    public Optional<User> findByUsername(String username)
-    {
-        return userRepository.findByUsername(username);
-    }
 
     /**
      * Fetches basic details of a user, including XP, level, and username.

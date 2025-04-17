@@ -171,16 +171,31 @@ public class BossService
     }
 
     private void handleBossDefeat(Boss boss, String identifier) {
-        User user = userService.getUserBasicDetails(identifier); // Resolve user
+        // Fetch the user
+        User user = userService.getUserBasicDetails(identifier);
 
-        int goldReward = calculateGoldRewardForBoss(boss); // Calculate reward
-        user.setGold(user.getGold() + goldReward); // Update user gold
-        user.setCurrentBossId(null); // Clear current boss
-        user.addBadge(boss.getRewards().getBadge()); // Grant reward badge
-        userRepository.save(user); // Save updated user
+        // Extract rewards from the boss
+        int xpReward = boss.getRewards().getXp();
+        int goldReward = boss.getRewards().getGold();
+        String badgeReward = boss.getRewards().getBadge();
 
-        triggerDefeatEvents(user.getId(), boss, goldReward); // Additional events
+        // Update user XP and gold
+        user.setExperience(user.getExperience() + xpReward);
+        user.setGold(user.getGold() + goldReward);
+
+        // Add the badge (if not already owned)
+        if (!user.hasBadge(badgeReward)) {
+            user.addBadge(badgeReward);
+        }
+
+        // Save updated user
+        userService.saveUser(user);
+
+        // Log the update for debugging/audit purposes
+        System.out.printf("User %s defeated boss %s and received: %d XP, %d gold, badge: %s%n",
+                identifier, boss.getName(), xpReward, goldReward, badgeReward);
     }
+
 
 
 
