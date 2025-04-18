@@ -8,7 +8,9 @@ import org.example.backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class BossService
@@ -99,36 +101,33 @@ public class BossService
      * Fetch a selection of bosses eligible for the user based on their level.
      * Revives defeated bosses if necessary to ensure there are always 3-4 options.
      */
-    public List<Boss> getBossSelection(int userLevel)
-    {
-        // Fetch all bosses suitable for the user's level
-        List<Boss> suitableBosses = bossRepository.findByLevelRequirementLessThanEqual(userLevel);
+    public List<Boss> getBossSelection(int userLevel) {
+        // First, count available (non-defeated) bosses
+        long availableBosses = bossRepository.countByDefeatedFalse();
 
-        // Separate available and defeated bosses
-        List<Boss> availableBosses = new ArrayList<>();
-        List<Boss> defeatedBosses = new ArrayList<>();
-        for (Boss boss : suitableBosses)
-        {
-            if (!boss.isDefeated())
-            {
-                availableBosses.add(boss);
-            } else
-            {
-                defeatedBosses.add(boss);
-            }
+        // Debug: Print the count of available bosses
+        System.out.println("Available non-defeated bosses: " + availableBosses);
+
+        // If we have less than 4 non-defeated bosses, revive all bosses
+        if (availableBosses < 4) {
+            System.out.println("Reviving all bosses because only " + availableBosses + " are available");
+            reviveAllBosses();
         }
 
-        // Revive defeated bosses when fewer than 3-4 bosses are available
-        while (availableBosses.size() < 4 && !defeatedBosses.isEmpty())
-        {
-            Boss bossToRevive = defeatedBosses.removeFirst();
-            reviveBoss(bossToRevive);
-            availableBosses.add(bossToRevive);
-        }
+        // Get random bosses using the existing method
+        List<Boss> selectedBosses = bossRepository.findRandomBosses(4);
 
-        // Return only 3-4 bosses as a selection
-        return availableBosses.subList(0, Math.min(availableBosses.size(), 4));
+        // Debug: Print selected bosses
+        System.out.println("Selected bosses: " + selectedBosses.stream()
+                .map(Boss::getName)  // assuming Boss has a getName() method
+                .collect(Collectors.joining(", ")));
+
+        return selectedBosses;
     }
+
+
+
+
 
     /**
      * Revives a defeated boss by resetting its health and state.

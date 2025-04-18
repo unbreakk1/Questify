@@ -1,13 +1,15 @@
 package org.example.backend.repository;
 
 import org.example.backend.entity.Boss;
+import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface BossRepository extends MongoRepository<Boss, String> {
+public interface BossRepository extends MongoRepository<Boss, String>
+{
 
     /**
      * Finds all bosses where the level requirement is less than or equal to the user's level.
@@ -23,7 +25,7 @@ public interface BossRepository extends MongoRepository<Boss, String> {
      * This uses the MongoDB `$sample` aggregation internally to return random bosses.
      *
      * @param levelRequirement The maximum level of the boss.
-     * @param size The size of the final boss selection.
+     * @param size             The size of the final boss selection.
      * @return A list of bosses, up to the given size.
      */
     @Query(value = "{ 'levelRequirement': { $lte: ?0 } }", fields = "{ }")
@@ -44,4 +46,13 @@ public interface BossRepository extends MongoRepository<Boss, String> {
     Optional<Boss> findFirstByLevelRequirementLessThanEqualAndRareTrue(int levelRequirement);
 
     List<Boss> findByDefeatedTrue();
+
+    long countByDefeatedFalse();
+
+    @Aggregation(pipeline = {
+            "{ $match: { defeated: false } }",
+            "{ $sample: { size: ?0 } }"
+    })
+    List<Boss> findRandomBosses(int size);
 }
+

@@ -10,7 +10,6 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 
-
 import {getUsernameFromToken, getUserInfo} from "../utils/UserAPI.tsx";
 import UserDetailsModal from "../components/users/UserDetailsModal.tsx";
 import HabitForm from "../components/habits/HabitForm";
