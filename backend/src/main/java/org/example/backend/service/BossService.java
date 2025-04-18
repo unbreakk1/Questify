@@ -170,7 +170,8 @@ public class BossService
         return !boss.isDefeated(); // Cannot initiate a fight with a defeated boss
     }
 
-    private void handleBossDefeat(Boss boss, String identifier) {
+    private void handleBossDefeat(Boss boss, String identifier)
+    {
         // Extract rewards from the boss
         int xpReward = boss.getRewards().getXp();
         int goldReward = boss.getRewards().getGold();
@@ -188,7 +189,8 @@ public class BossService
         updatedUser.setGold(updatedUser.getGold() + goldReward);
 
         // Add the badge (if not already owned)
-        if (!updatedUser.hasBadge(badgeReward)) {
+        if (!updatedUser.hasBadge(badgeReward))
+        {
             updatedUser.addBadge(badgeReward);
         }
 
@@ -198,10 +200,6 @@ public class BossService
         System.out.printf("User %s defeated boss %s and received: %d XP, %d gold, badge: %s%n",
                 identifier, boss.getName(), xpReward, goldReward, badgeReward);
     }
-
-
-
-
 
 
     /**
