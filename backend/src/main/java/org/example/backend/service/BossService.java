@@ -171,33 +171,34 @@ public class BossService
     }
 
     private void handleBossDefeat(Boss boss, String identifier) {
-        // Fetch the user
-        User user = userService.getUserBasicDetails(identifier);
-
         // Extract rewards from the boss
         int xpReward = boss.getRewards().getXp();
         int goldReward = boss.getRewards().getGold();
         String badgeReward = boss.getRewards().getBadge();
 
-        // Update user XP and gold
+        // Fetch the user
+        User user = userService.getUserBasicDetails(identifier);
         String username = user.getUsername();
-        System.out.printf("Calling updateUserDetails for user %s with XP reward: %d%n", username, xpReward);
-        userService.updateUserDetails(username, xpReward, null, null);
 
-        user.setGold(user.getGold() + goldReward);
+        // Update user XP and level - SAVE THIS RESULT
+        System.out.printf("Calling updateUserDetails for user %s with XP reward: %d%n", username, xpReward);
+        User updatedUser = userService.updateUserDetails(username, xpReward, null, null);
+
+        // Use the UPDATED user instance for remaining changes
+        updatedUser.setGold(updatedUser.getGold() + goldReward);
 
         // Add the badge (if not already owned)
-        if (!user.hasBadge(badgeReward)) {
-            user.addBadge(badgeReward);
+        if (!updatedUser.hasBadge(badgeReward)) {
+            updatedUser.addBadge(badgeReward);
         }
 
-        // Save updated user
-        userService.saveUser(user);
+        // Save final state with all updates
+        userService.saveUser(updatedUser);
 
-        // Log the update for debugging/audit purposes
         System.out.printf("User %s defeated boss %s and received: %d XP, %d gold, badge: %s%n",
                 identifier, boss.getName(), xpReward, goldReward, badgeReward);
     }
+
 
 
 
