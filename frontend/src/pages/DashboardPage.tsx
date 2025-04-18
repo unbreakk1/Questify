@@ -19,8 +19,9 @@ import TaskCard from "../components/tasks/TaskCard";
 import HabitCard from "../components/habits/HabitCard";
 import {getAllTasks, completeTask, deleteTask, Task} from "../api/TasksAPI";
 import {getAllHabits, completeHabit, deleteHabit, Habit} from "../api/HabitsAPI";
-import {getActiveBoss, attackBoss, BossResponse} from "../api/BossesAPI";
+import {getActiveBoss, attackBoss, BossResponse, getBossSelection, Boss} from "../api/BossesAPI";
 import BossCard from "../components/bosses/BossCard.tsx";
+import BossSelectionModal from '../components/bosses/BossSelectionModal';
 
 
 const DashboardPage: React.FC = () =>
@@ -33,6 +34,9 @@ const DashboardPage: React.FC = () =>
     const [openUserModal, setOpenUserModal] = useState(false);
     const [boss, setBoss] = useState<BossResponse | null>(null); // Store current boss
     const [loadingBoss, setLoadingBoss] = useState(true); // Track boss loading state
+    const [showBossSelection, setShowBossSelection] = useState(false);
+    const [availableBosses, setAvailableBosses] = useState<Boss[]>([]);
+    const [loadingBossSelection, setLoadingBossSelection] = useState(false);
 
 
     useEffect(() =>
@@ -77,6 +81,22 @@ const DashboardPage: React.FC = () =>
         fetchData();
     }, []);
 
+    const handleBossDefeat = async () =>
+    {
+        setLoadingBossSelection(true);
+        try
+        {
+            const bosses = await getBossSelection();
+            setAvailableBosses(bosses);
+            setShowBossSelection(true);
+        } catch (error)
+        {
+            console.error('Failed to fetch boss selection:', error);
+        } finally
+        {
+            setLoadingBossSelection(false);
+        }
+    };
 
     const handleCompleteTask = async (taskId: string) =>
     {
@@ -93,13 +113,10 @@ const DashboardPage: React.FC = () =>
 
                 if (updatedBoss.currentHealth === 0)
                 {
-                    alert("Boss defeated! Rewards unlocked!");
-                    const refreshedBossResponse = await getActiveBoss(); // Get a new boss after defeat
-                    setBoss(refreshedBossResponse);
+                    await handleBossDefeat();
                 }
             }
-        }
-        catch (error)
+        } catch (error)
         {
             console.error("Failed to complete task or process boss damage:", error);
         }
@@ -125,13 +142,10 @@ const DashboardPage: React.FC = () =>
 
                 if (updatedBossResponse.currentHealth === 0)
                 {
-                    alert("Boss defeated! Rewards unlocked!");
-                    const refreshedBoss = await getActiveBoss(); // Get a new boss after defeat
-                    setBoss(refreshedBoss);
+                    await handleBossDefeat();
                 }
             }
-        }
-        catch (error)
+        } catch (error)
         {
             console.error("Failed to complete habit or process boss damage:", error);
         }
@@ -315,6 +329,17 @@ const DashboardPage: React.FC = () =>
                 open={openUserModal} // Use the state for modal visibility
                 onClose={() => setOpenUserModal(false)} // Properly toggle modal off
                 username={userStats?.username} // Pass the username prop here
+            />
+            <BossSelectionModal
+                open={showBossSelection}
+                onClose={() => setShowBossSelection(false)}
+                bosses={availableBosses}
+                onBossSelected={async () =>
+                {
+                    const refreshedBoss = await getActiveBoss();
+                    setBoss(refreshedBoss);
+                }}
+                loading={loadingBossSelection}
             />
 
 
