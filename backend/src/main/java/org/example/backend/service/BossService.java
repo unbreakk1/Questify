@@ -180,7 +180,10 @@ public class BossService
         String badgeReward = boss.getRewards().getBadge();
 
         // Update user XP and gold
-        user.setExperience(user.getExperience() + xpReward);
+        String username = user.getUsername();
+        System.out.printf("Calling updateUserDetails for user %s with XP reward: %d%n", username, xpReward);
+        userService.updateUserDetails(username, xpReward, null, null);
+
         user.setGold(user.getGold() + goldReward);
 
         // Add the badge (if not already owned)

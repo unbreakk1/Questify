@@ -51,7 +51,7 @@ public class UserService implements UserDetailsService
         user.setUsername(username);
         user.setEmail(email);
         user.setPassword(encodedPassword); // Store hashed password
-        user.setLevel(0);
+        user.setLevel(1);
         user.setExperience(0);
         user.setStreak(0);
         user.setGold(0);
@@ -107,13 +107,40 @@ public class UserService implements UserDetailsService
      */
     public User updateUserDetails(String identifier, Integer experience, Integer level, Integer streak)
     {
-        User user = resolveUser(identifier); // Resolve identifier to a User
+        User user = resolveUser(identifier);
 
-        if (experience != null) user.setExperience(experience);
-        if (level != null) user.setLevel(level);
-        if (streak != null) user.setStreak(streak);
+        System.out.printf("Recieved XP: %d, forName: %s%n", experience, identifier);
+        // Update XP if provided
+        if (experience != null)
+        {
+            System.out.printf("Updating XP for user %s with %d XP%n", identifier, experience);
+            user.setExperience(user.getExperience() + experience);
 
-        return userRepository.save(user); // Save changes
+            // Check for level-up
+            int xpForNextLevel = 100 * user.getLevel(); // Example: Level 2 requires 200 XP
+            while (user.getExperience() >= xpForNextLevel)
+            {
+                user.setExperience(user.getExperience() - xpForNextLevel); // Carry extra XP to next level
+                user.setLevel(user.getLevel() + 1); // Increment the user's level
+
+                // Recalculate XP for the next level
+                xpForNextLevel = 100 * user.getLevel();
+            }
+        }
+
+        // Update streak if provided
+        if (streak != null)
+        {
+            user.setStreak(streak);
+        }
+
+        // Save user
+        saveUser(user);
+        System.out.printf("User saved with Final XP: %d | Final Level: %d%n",
+                user.getExperience(), user.getLevel());
+
+
+        return user;
     }
 
 
@@ -158,21 +185,6 @@ public class UserService implements UserDetailsService
         return currentBossId;
     }
 
-
-    public void updateGoldAndBadges(String identifier, int gold, Set<String> badges)
-    {
-        User user = resolveUser(identifier); // Reuses the helper method
-
-        user.setGold(user.getGold() + gold);
-        if (badges != null)
-        {
-            user.getBadges().addAll(badges);
-        }
-
-        userRepository.save(user); // Persist updates
-    }
-
-
     private User resolveUser(String identifier)
     {
         // Check if the identifier is a valid MongoDB ObjectId
@@ -188,9 +200,27 @@ public class UserService implements UserDetailsService
                 .orElseThrow(() -> new IllegalArgumentException("User with username '" + identifier + "' not found."));
     }
 
-    public void saveUser(User user)
-    {
-        userRepository.save(user); // Save the updated user to the database
+    public User saveUser(User user) {
+        System.out.printf("Before save - Username: %s, XP: %d, Level: %d%n",
+                user.getUsername(), user.getExperience(), user.getLevel());
+
+        User savedUser = userRepository.save(user);
+
+        // Verify the saved state
+        System.out.printf("After save - Username: %s, XP: %d, Level: %d%n",
+                savedUser.getUsername(), savedUser.getExperience(), savedUser.getLevel());
+
+        // Immediately fetch from DB to verify persistence
+        User verifiedUser = userRepository.findByUsername(user.getUsername()).orElse(null);
+        if (verifiedUser != null) {
+            System.out.printf("Verified in DB - Username: %s, XP: %d, Level: %d%n",
+                    verifiedUser.getUsername(), verifiedUser.getExperience(), verifiedUser.getLevel());
+        } else {
+            System.out.println("Failed to verify user in DB after save!");
+        }
+
+        return savedUser;
     }
+
 
 }

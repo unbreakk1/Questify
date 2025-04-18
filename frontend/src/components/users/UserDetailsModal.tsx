@@ -46,22 +46,31 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ open, onClose, user
                         return <CircularProgress />;
                     }
                     if (userDetails) {
+                        // Calculate XP needed for the next level
+                        const xpForNextLevel = 100 * userDetails.level;
+
                         return (
                             <Box>
                                 <Typography variant="h6">Level: {userDetails.level}</Typography>
                                 <Box display="flex" alignItems="center">
-                                    <MonetizationOnIcon sx={{ color: "#FFD700", mr: 1 }} /> {/* Gold coin icon */}
-                                    <Typography variant="body1">
-                                        {userDetails.gold} {/* Display gold value */}
-                                    </Typography>
+                                    <MonetizationOnIcon sx={{ color: "#FFD700", mr: 1 }} />
+                                    <Typography variant="body1">{userDetails.gold}</Typography>
                                 </Box>
 
                                 <Typography>XP:</Typography>
+
+                                {/* Numbers above the progress bar */}
+                                <Box display="flex" justifyContent="space-between">
+                                    <Typography variant="body2">{userDetails.xp} XP</Typography>
+                                    <Typography variant="body2">/ {xpForNextLevel} XP</Typography>
+                                </Box>
+
                                 <LinearProgress
                                     variant="determinate"
-                                    value={(userDetails.xp % 100) / 100 * 100} // XP Progress Bar Calculation
+                                    value={(userDetails.xp / xpForNextLevel) * 100} // Dynamic progress value
                                     sx={{ my: 1 }}
                                 />
+
                                 <Typography>Badges:</Typography>
                                 <Typography>{userDetails.badges.join(", ") || "No badges yet."}</Typography>
                             </Box>
@@ -71,6 +80,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ open, onClose, user
                 })()}
             </DialogContent>
         </Dialog>
+
     );
 };
 
