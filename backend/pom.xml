@@ -90,7 +90,7 @@
 </dependencies>
 
 	<build>
-		<plugins><!-- Spring Boot Maven Plugin to create a fat JAR -->
+		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
@@ -109,12 +109,6 @@
 				<artifactId>maven-jar-plugin</artifactId>
 				<version>3.4.2</version> <!-- Use the latest version -->
 				<configuration>
-					<excludes>
-						<exclude>
-							<groupId>org.projectlombok</groupId>
-							<artifactId>lombok</artifactId>
-						</exclude>
-					</excludes>
 					<archive>
 						<manifest>
 							<mainClass>org.example.backend.BackendApplication</mainClass>
