@@ -30,10 +30,16 @@ public class BossController
     @ResponseStatus(HttpStatus.OK)
     public BossResponse getActiveBoss(Authentication authentication)
     {
-        // Get identifier (could be username or _id)
         String identifier = authentication.getName();
-        User user = userService.getUserBasicDetails(identifier); // Resolve user safely
-        return bossService.getActiveBoss(user.getId()); // Use the MongoDB _id
+        User user = userService.getUserBasicDetails(identifier);
+
+        // Check if user has no boss selected
+        if (user.getCurrentBossId() == null)
+        {
+            throw new IllegalStateException("NO_ACTIVE_BOSS");
+        }
+
+        return bossService.getActiveBoss(user.getId());
     }
 
 
@@ -61,7 +67,8 @@ public class BossController
 
     @PostMapping("/select/{bossId}")
     @ResponseStatus(HttpStatus.OK)
-    public String selectBoss(Authentication authentication, @PathVariable String bossId) {
+    public String selectBoss(Authentication authentication, @PathVariable String bossId)
+    {
         // Get the currently authenticated user identifier (username or ID)
         String identifier = authentication.getName();
 
@@ -70,7 +77,8 @@ public class BossController
 
         // Verify if the boss exists
         Boss boss = bossService.getBossById(bossId);
-        if (boss == null) {
+        if (boss == null)
+        {
             throw new IllegalArgumentException("Invalid boss ID: " + bossId);
         }
 
@@ -80,7 +88,6 @@ public class BossController
 
         return "Boss '" + boss.getName() + "' successfully selected for user " + user.getUsername();
     }
-
 
 
     @PostMapping("/fight/{bossId}")

@@ -44,12 +44,29 @@ const DashboardPage: React.FC = () =>
         {
             const tasksData = await getAllTasks();
             const habitsData = await getAllHabits();
-            const activeBoss = await getActiveBoss();
+            // const activeBoss = await getActiveBoss();
 
             setTasks(tasksData);
             setHabits(habitsData);
-            console.log("Active Boss:", activeBoss);
-            setBoss(activeBoss);
+            //console.log("Active Boss:", activeBoss);
+            //setBoss(activeBoss);
+            try
+            {
+                const activeBoss = await getActiveBoss();
+                setBoss(activeBoss);
+            } catch (error: Error | unknown)
+            {
+                const err = error as { response?: { data?: string } };
+                if (err?.response?.data === "NO_ACTIVE_BOSS")
+                {
+                    const bosses = await getBossSelection();
+                    setAvailableBosses(bosses);
+                    setShowBossSelection(true);
+                } else
+                {
+                    console.error("Error fetching active boss:", error);
+                }
+            }
 
 
             const username = getUsernameFromToken();
@@ -80,22 +97,20 @@ const DashboardPage: React.FC = () =>
         fetchData();
     }, []);
 
-    const handleBossDefeat = async () =>
-    {
+    const handleBossDefeat = async () => {
         setLoadingBossSelection(true);
-        try
-        {
+        try {
             const bosses = await getBossSelection();
             setAvailableBosses(bosses);
+            setBoss(null); // Clear the current boss when defeated
             setShowBossSelection(true);
-        } catch (error)
-        {
+        } catch (error) {
             console.error('Failed to fetch boss selection:', error);
-        } finally
-        {
+        } finally {
             setLoadingBossSelection(false);
         }
     };
+
 
     const handleCompleteTask = async (taskId: string) =>
     {
@@ -333,13 +348,20 @@ const DashboardPage: React.FC = () =>
                 open={showBossSelection}
                 onClose={() => setShowBossSelection(false)}
                 bosses={availableBosses}
-                onBossSelected={async () =>
-                {
-                    const refreshedBoss = await getActiveBoss();
-                    setBoss(refreshedBoss);
+                onBossSelected={async () => {
+                    try {
+                        const refreshedBoss = await getActiveBoss();
+                        setBoss(refreshedBoss);
+                        setShowBossSelection(false); // Only close after successful selection
+                    } catch (error) {
+                        console.error('Failed to get active boss:', error);
+                    }
                 }}
                 loading={loadingBossSelection}
+                requireSelection={!boss} // This ensures the modal can't be closed if there's no active boss
             />
+
+
 
 
             {/* Modal for Adding */}

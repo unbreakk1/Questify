@@ -18,6 +18,7 @@ interface BossSelectionModalProps {
     bosses: Boss[];
     onBossSelected: (boss: Boss) => void;
     loading: boolean;
+    requireSelection: boolean;
 }
 
 const BossSelectionModal: React.FC<BossSelectionModalProps> = ({
@@ -25,20 +26,26 @@ const BossSelectionModal: React.FC<BossSelectionModalProps> = ({
                                                                    onClose,
                                                                    bosses,
                                                                    onBossSelected,
-                                                                   loading
+                                                                   loading,
+                                                                   requireSelection = false,
                                                                }) => {
     const handleSelectBoss = async (boss: Boss) => {
         try {
             await selectBoss(boss.id);
             onBossSelected(boss);
-            onClose();
+            // Remove the onClose calls from here as they'll be handled by the parent
         } catch (error) {
             console.error('Failed to select boss:', error);
         }
     };
 
     return (
-        <Modal open={open} onClose={onClose}>
+        <Modal
+            open={open}
+            onClose={requireSelection ? undefined : onClose}
+            disableEscapeKeyDown={requireSelection}
+            disableBackdropClick={requireSelection}
+        >
             <Box sx={{
                 position: 'absolute',
                 top: '50%',
@@ -51,7 +58,12 @@ const BossSelectionModal: React.FC<BossSelectionModalProps> = ({
                 p: 4,
                 borderRadius: 2
             }}>
-                <Typography variant="h5" mb={3}>Choose Your Next Challenge!</Typography>
+                <Typography variant="h5" mb={3}>
+                    Select Your Next Boss!
+                </Typography>
+                <Typography color="text.secondary" mb={2}>
+                    You must select a boss to continue your journey
+                </Typography>
                 {loading ? (
                     <Box display="flex" justifyContent="center">
                         <CircularProgress />
