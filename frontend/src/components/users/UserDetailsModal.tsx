@@ -1,5 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { Dialog, DialogTitle, DialogContent, Typography, LinearProgress, Box, CircularProgress } from "@mui/material";
+import {
+    Modal,
+    ModalDialog,
+    ModalClose,
+    Typography,
+    LinearProgress,
+    Box,
+    CircularProgress,
+    Stack,
+    Divider
+} from "@mui/joy";
 import { getUserInfo } from "../../utils/UserAPI";
 import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
 
@@ -38,49 +48,112 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ open, onClose, user
     }, [open, username]);
 
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-            <DialogTitle>User Details</DialogTitle>
-            <DialogContent>
+        <Modal
+            open={open}
+            onClose={onClose}
+        >
+            <ModalDialog
+                variant="outlined"
+                sx={{
+                    minWidth: 400,
+                    maxWidth: 500,
+                }}
+            >
+                <ModalClose />
+                <Typography level="h4" mb={2}>
+                    User Details
+                </Typography>
+
                 {(() => {
                     if (loading) {
-                        return <CircularProgress />;
-                    }
-                    if (userDetails) {
-                        // Calculate XP needed for the next level
-                        const xpForNextLevel = 100 * userDetails.level;
-
                         return (
-                            <Box>
-                                <Typography variant="h6">Level: {userDetails.level}</Typography>
-                                <Box display="flex" alignItems="center">
-                                    <MonetizationOnIcon sx={{ color: "#FFD700", mr: 1 }} />
-                                    <Typography variant="body1">{userDetails.gold}</Typography>
-                                </Box>
-
-                                <Typography>XP:</Typography>
-
-                                {/* Numbers above the progress bar */}
-                                <Box display="flex" justifyContent="space-between">
-                                    <Typography variant="body2">{userDetails.xp} XP</Typography>
-                                    <Typography variant="body2">/ {xpForNextLevel} XP</Typography>
-                                </Box>
-
-                                <LinearProgress
-                                    variant="determinate"
-                                    value={(userDetails.xp / xpForNextLevel) * 100} // Dynamic progress value
-                                    sx={{ my: 1 }}
-                                />
-
-                                <Typography>Badges:</Typography>
-                                <Typography>{userDetails.badges.join(", ") || "No badges yet."}</Typography>
+                            <Box
+                                display="flex"
+                                justifyContent="center"
+                                alignItems="center"
+                                minHeight={200}
+                            >
+                                <CircularProgress />
                             </Box>
                         );
                     }
-                    return <Typography color="error">Failed to load details. Try again.</Typography>;
-                })()}
-            </DialogContent>
-        </Dialog>
 
+                    if (userDetails) {
+                        const xpForNextLevel = 100 * userDetails.level;
+
+                        return (
+                            <Stack spacing={2}>
+                                <Typography level="h3">
+                                    Level: {userDetails.level}
+                                </Typography>
+
+                                <Box
+                                    display="flex"
+                                    alignItems="center"
+                                    gap={1}
+                                >
+                                    <MonetizationOnIcon sx={{ color: "warning.300" }} />
+                                    <Typography level="body-lg">
+                                        {userDetails.gold}
+                                    </Typography>
+                                </Box>
+
+                                <Divider />
+
+                                <Box>
+                                    <Typography level="title-sm" mb={1}>
+                                        Experience Progress
+                                    </Typography>
+
+                                    <Box
+                                        display="flex"
+                                        justifyContent="space-between"
+                                        mb={1}
+                                    >
+                                        <Typography level="body-sm">
+                                            {userDetails.xp} XP
+                                        </Typography>
+                                        <Typography level="body-sm">
+                                            {xpForNextLevel} XP
+                                        </Typography>
+                                    </Box>
+
+                                    <LinearProgress
+                                        determinate
+                                        value={(userDetails.xp / xpForNextLevel) * 100}
+                                        sx={{
+                                            '--LinearProgress-thickness': '8px',
+                                            '--LinearProgress-radius': '4px',
+                                        }}
+                                    />
+                                </Box>
+
+                                <Box>
+                                    <Typography level="title-sm" mb={1}>
+                                        Badges
+                                    </Typography>
+                                    <Typography level="body-md">
+                                        {userDetails.badges.length > 0
+                                            ? userDetails.badges.join(", ")
+                                            : "No badges yet."}
+                                    </Typography>
+                                </Box>
+                            </Stack>
+                        );
+                    }
+
+                    return (
+                        <Typography
+                            level="body-lg"
+                            color="danger"
+                            textAlign="center"
+                        >
+                            Failed to load details. Try again.
+                        </Typography>
+                    );
+                })()}
+            </ModalDialog>
+        </Modal>
     );
 };
 

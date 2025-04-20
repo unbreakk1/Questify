@@ -1,19 +1,62 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router';
+import {CssVarsProvider} from '@mui/joy/styles';
+import CssBaseline from '@mui/joy/CssBaseline';
+import {BrowserRouter as Router, Routes, Route, Navigate} from 'react-router';
+import theme from './themes/theme';
 import LandingPage from './pages/LandingPage';
+import DashboardPage from './pages/DashboardPage';
+import {useEffect, useState} from 'react';
+import {getUsernameFromToken} from './utils/UserAPI';
 
-import DashboardPage from './pages/DashboardPage'; // New dashboard page
-
-const App: React.FC = () =>
+function App()
 {
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+
+    useEffect(() =>
+    {
+        const checkAuth = async () =>
+        {
+            const token = localStorage.getItem('token');
+            if (token)
+            {
+                try
+                {
+                    const username = getUsernameFromToken();
+                    setIsAuthenticated(!!username);
+                } catch
+                {
+                    setIsAuthenticated(false);
+                    localStorage.removeItem('token');
+                }
+            } else
+            {
+                setIsAuthenticated(false);
+            }
+        };
+
+        checkAuth();
+    }, []);
+
     return (
-        <Router>
-            <Routes>
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/dashboard" element={<DashboardPage />} />
-            </Routes>
-        </Router>
+        <CssVarsProvider defaultMode="dark" theme={theme}>
+            <CssBaseline/>
+            <Router>
+                <Routes>
+                    <Route
+                        path="/"
+                        element={
+                            isAuthenticated ? <Navigate to="/dashboard"/> : <LandingPage/>
+                        }
+                    />
+                    <Route
+                        path="/dashboard"
+                        element={
+                            isAuthenticated ? <DashboardPage/> : <Navigate to="/"/>
+                        }
+                    />
+                </Routes>
+            </Router>
+        </CssVarsProvider>
     );
-};
+}
 
 export default App;

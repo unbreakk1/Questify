@@ -1,4 +1,4 @@
-import { Card, CardContent, Typography, Checkbox, Box, Button } from "@mui/material";
+import { Card, CardContent, Typography, Checkbox, Box, Button, CardActions } from "@mui/joy";
 import { Habit } from "../../api/HabitsAPI.tsx";
 
 interface HabitCardProps {
@@ -16,51 +16,45 @@ const HabitCard: React.FC<HabitCardProps> = ({ habit, onComplete, onDelete }) =>
 
     return (
         <Card
+            variant="outlined"
             sx={{
-                margin: "8px 0", // Space between habit cards
-                padding: "12px", // Adjust padding for a thinner layout
-                width: "100%", // Stretch the card to full container width
-                height: "64px", // Limit the height to make it thinner
-                display: "flex", // Flex layout to align content on a single row
-                alignItems: "center", // Center contents vertically
-                justifyContent: "space-between", // Space out contents horizontally
-                backgroundColor: isCompletedToday ? "#f5f5f5" : "darkgray", // Subtle effect for completed cards
-                opacity: isCompletedToday ? 0.8 : 1, // Slightly lower opacity for completed cards
+                mb: 1,
+                height: '64px',
+                display: 'flex',
+                alignItems: 'center',
+                bgcolor: isCompletedToday ? 'background.level2' : 'background.surface',
+                opacity: isCompletedToday ? 0.8 : 1,
             }}
         >
-            <CardContent
-                sx={{
-                    padding: "0 16px", // Adjusted padding for content
-                    display: "flex",
-                    flex: 1,
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                }}
-            >
-                {/* Left Content */}
+            <CardContent sx={{
+                display: 'flex',
+                flex: 1,
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 2,
+            }}>
                 <Box>
-                    <Typography variant="h6">{title}</Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography level="title-md">{title}</Typography>
+                    <Typography level="body-sm">
                         Streak: {streak} days
                     </Typography>
                 </Box>
 
-                {/* Right Content */}
-                <Box display="flex" alignItems="center" gap={2}>
+                <CardActions sx={{ gap: 1 }}>
                     <Checkbox
-                        checked={isCompletedToday} // Checkbox stays checked when completed
+                        checked={isCompletedToday}
                         onChange={() => onComplete(habit.id)}
-                        disabled={isCompletedToday} // Disable if already completed
+                        disabled={isCompletedToday}
                     />
                     <Button
-                        onClick={() => onDelete(habit.id)} // Hook up the delete handler
-                        color="error"
-                        variant="outlined"
-                        size="small"
+                        onClick={() => onDelete(habit.id)}
+                        color="danger"
+                        variant="soft"
+                        size="sm"
                     >
                         Delete
                     </Button>
-                </Box>
+                </CardActions>
             </CardContent>
         </Card>
     );

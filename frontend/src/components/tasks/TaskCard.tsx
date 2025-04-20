@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, CardContent, Typography, Button, Box } from "@mui/material";
+import { Card, CardContent, Typography, Button, Box } from "@mui/joy";
 
 interface Task {
     id: string;
@@ -13,48 +13,46 @@ interface Task {
 const TaskCard: React.FC<Task> = ({ id, title, dueDate, completed, onComplete, onDelete }) => {
     return (
         <Card
+            variant="outlined"
             sx={{
-                margin: "8px 0", // Space between task cards
-                padding: "12px", // Adjust padding for a thinner layout
-                width: "100%", // Stretch the card to full container width
-                height: "64px", // Make the card thinner
-                display: "flex", // Flex layout to align content on a single row
-                alignItems: "center", // Center contents vertically
-                justifyContent: "space-between", // Space out contents horizontally
-                backgroundColor: completed ? "darkgrey" : "darkgray", // Subtle effect for completed tasks
-                opacity: completed ? 0.8 : 1, // Slightly lower opacity for completed tasks
+                mb: 1,
+                height: '64px',
+                display: 'flex',
+                alignItems: 'center',
+                bgcolor: completed ? 'background.level2' : 'background.surface',
+                opacity: completed ? 0.8 : 1,
             }}
         >
             <CardContent
                 sx={{
-                    padding: "0 16px", // Adjusted padding for content
-                    display: "flex",
+                    display: 'flex',
                     flex: 1,
-                    justifyContent: "space-between",
-                    alignItems: "center",
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: 2,
                 }}
             >
-                {/* Left Content */}
                 <Box>
-                    <Typography variant="h6">{title}</Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography level="title-md">{title}</Typography>
+                    <Typography level="body-sm" color="neutral">
                         Due: {dueDate}
                     </Typography>
                 </Box>
 
-                {/* Right Content */}
-                <Box display="flex" alignItems="center" gap={2}>
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                     <Button
-                        variant="contained"
+                        size="sm"
                         color="primary"
+                        variant="soft"
                         onClick={() => onComplete(id)}
-                        disabled={completed} // Disable if already completed
+                        disabled={completed}
                     >
                         {completed ? "Completed" : "Complete"}
                     </Button>
                     <Button
-                        variant="contained"
-                        color="error"
+                        size="sm"
+                        color="danger"
+                        variant="soft"
                         onClick={() => onDelete(id)}
                     >
                         Delete

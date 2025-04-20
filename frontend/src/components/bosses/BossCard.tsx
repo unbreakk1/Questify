@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, LinearProgress } from '@mui/material';
+import { Box, Typography, LinearProgress, Card, CardContent, Stack } from '@mui/joy';
 import { Boss } from '../../api/BossesAPI';
 
 interface BossCardProps
@@ -9,39 +9,45 @@ interface BossCardProps
 
 const BossCard: React.FC<BossCardProps> = ({ boss }) => {
     return (
-        <Box
+        <Card
+            variant="outlined"
             sx={{
-                padding: 2,
-                margin: 2,
-                border: '1px solid gray',
-                borderRadius: 2,
-                backgroundColor: boss.rare ? '#fff3cd' : '#f5f5f5', // Highlight rare bosses
-                opacity: boss.defeated ? 0.6 : 1, // Dim defeated bosses
+                bgcolor: boss.rare ? 'warning.softBg' : 'background.surface',
+                opacity: boss.defeated ? 0.6 : 1,
             }}
         >
-            <Typography variant="h5">{boss.name}</Typography>
-            <Typography variant="body1">Level Requirement: {boss.levelRequirement}</Typography>
-            <Typography variant="body2" color="text.secondary">
-                Rare: {boss.rare ? 'Yes' : 'No'}
-            </Typography>
+            <CardContent>
+                <Stack spacing={1}>
+                    <Typography level="h4">{boss.name}</Typography>
+                    <Typography level="body-sm">Level Requirement: {boss.levelRequirement}</Typography>
+                    <Typography level="body-sm" color={boss.rare ? 'warning' : 'neutral'}>
+                        {boss.rare ? '⭐ Rare Boss' : 'Normal Boss'}
+                    </Typography>
 
-            {/* Health Bar */}
-            <Box mt={1}>
-                <Typography variant="body2">Health: {boss.currentHealth}/{boss.maxHealth}</Typography>
-                <LinearProgress
-                    variant="determinate"
-                    value={(boss.currentHealth / boss.maxHealth) * 100}
-                    sx={{ height: 8, borderRadius: 4 }}
-                />
-            </Box>
+                    {/* Health Bar */}
+                    <Box>
+                        <Typography level="body-sm">
+                            Health: {boss.currentHealth}/{boss.maxHealth}
+                        </Typography>
+                        <LinearProgress
+                            determinate
+                            value={(boss.currentHealth / boss.maxHealth) * 100}
+                            sx={{
+                                '--LinearProgress-radius': '4px',
+                                '--LinearProgress-thickness': '8px',
+                            }}
+                        />
+                    </Box>
 
-            {/* Rewards Section */}
-            <Box mt={2}>
-                <Typography variant="body2">
-                    Rewards: {boss.rewards.xp} XP, {boss.rewards.badge}
-                </Typography>
-            </Box>
-        </Box>
+                    {/* Rewards Section */}
+                    <Box>
+                        <Typography level="body-sm">
+                            Rewards: {boss.rewards.xp} XP, {boss.rewards.badge}
+                        </Typography>
+                    </Box>
+                </Stack>
+            </CardContent>
+        </Card>
     );
 };
 

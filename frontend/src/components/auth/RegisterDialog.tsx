@@ -1,15 +1,7 @@
 import React, {useState} from 'react';
-import {
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    TextField,
-    Button,
-    Typography,
-} from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close'; // Red X icon for invalid fields
-import CheckCircleIcon from '@mui/icons-material/CheckCircle'; // Green check for valid fields
+import { Modal, Sheet, Typography, FormControl, FormLabel, Input, Button, Stack } from '@mui/joy';
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 import {registerUser} from '../../api/Auth';
 import axios, {AxiosError} from "axios";
 import {ErrorResponse} from "../../types/ErrorResponse.tsx";
@@ -154,157 +146,118 @@ const RegisterDialog: React.FC<RegisterDialogProps> = ({open, onClose}) =>
     };
 
     return (
-        <Dialog open={open} onClose={onClose}>
-            <DialogTitle>Register</DialogTitle>
-            <DialogContent>
-                {error && <Typography color="error" sx={{mb: 2}}>{error}</Typography>}
-                {successMessage && <Typography color="success" sx={{mb: 2}}>{successMessage}</Typography>}
+        <Modal
+            open={open}
+            onClose={onClose}
+            sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+        >
+            <Sheet
+                variant="outlined"
+                sx={{
+                    width: 400,
+                    p: 3,
+                    borderRadius: 'md',
+                    boxShadow: 'lg',
+                }}
+            >
+                <Typography level="h4" component="h1" sx={{ mb: 2 }}>
+                    Create Account
+                </Typography>
 
-                {/* Username Field */}
-                <div style={{position: 'relative'}}>
-                    <TextField
-                        margin="dense"
-                        label="Username"
-                        type="text"
-                        fullWidth
-                        variant="outlined"
-                        value={username}
-                        onChange={(e) => handleUsernameChange(e.target.value)}
-                        error={!!usernameError}
-                        helperText={usernameError || ' '}
-                        sx={{
-                            '& .MuiOutlinedInput-root': {
-                                '& fieldset': {
-                                    borderColor: usernameError ? 'red' : username ? 'green' : 'inherit',
-                                },
-                            },
-                        }}
-                    />
-                    {username && !usernameError && (
-                        <CheckCircleIcon
-                            fontSize="small"
-                            style={{
-                                color: 'green',
-                                position: 'absolute',
-                                top: '50%',
-                                right: '-25px',
-                                transform: 'translateY(-50%)',
-                            }}
-                        />
-                    )}
-                    {usernameError && (
-                        <CloseIcon
-                            fontSize="small"
-                            style={{
-                                color: 'red',
-                                position: 'absolute',
-                                top: '50%',
-                                right: '-25px',
-                                transform: 'translateY(-50%)',
-                            }}
-                        />
-                    )}
-                </div>
+                {error && (
+                    <Typography color="danger" level="body-sm" sx={{ mb: 2 }}>
+                        {error}
+                    </Typography>
+                )}
+                {successMessage && (
+                    <Typography color="success" level="body-sm" sx={{ mb: 2 }}>
+                        {successMessage}
+                    </Typography>
+                )}
 
-                {/* Email Field */}
-                <div style={{position: 'relative'}}>
-                    <TextField
-                        margin="dense"
-                        label="Email"
-                        type="email"
-                        fullWidth
-                        variant="outlined"
-                        value={email}
-                        onChange={(e) => handleEmailChange(e.target.value)}
-                        error={!!emailError}
-                        helperText={emailError || ' '}
-                        sx={{
-                            '& .MuiOutlinedInput-root': {
-                                '& fieldset': {
-                                    borderColor: emailError ? 'red' : email ? 'green' : 'inherit',
-                                },
-                            },
-                        }}
-                    />
-                    {email && !emailError && (
-                        <CheckCircleIcon
-                            fontSize="small"
-                            style={{
-                                color: 'green',
-                                position: 'absolute',
-                                top: '50%',
-                                right: '-25px',
-                                transform: 'translateY(-50%)',
-                            }}
-                        />
-                    )}
-                    {emailError && (
-                        <CloseIcon
-                            fontSize="small"
-                            style={{
-                                color: 'red',
-                                position: 'absolute',
-                                top: '50%',
-                                right: '-25px',
-                                transform: 'translateY(-50%)',
-                            }}
-                        />
-                    )}
-                </div>
+                <form onSubmit={handleRegister}>
+                    <Stack spacing={2}>
+                        <FormControl error={!!usernameError}>
+                            <FormLabel>Username</FormLabel>
+                            <Input
+                                value={username}
+                                onChange={(e) => handleUsernameChange(e.target.value)}
+                                required
+                                endDecorator={
+                                    username && (
+                                        usernameError ?
+                                            <CancelRoundedIcon color="error" /> :
+                                            <CheckCircleRoundedIcon color="success" />
+                                    )
+                                }
+                            />
+                            {usernameError && (
+                                <Typography level="body-xs" color="danger">
+                                    {usernameError}
+                                </Typography>
+                            )}
+                        </FormControl>
 
-                {/* Password Field */}
-                <div style={{position: 'relative'}}>
-                    <TextField
-                        margin="dense"
-                        label="Password"
-                        type="password"
-                        fullWidth
-                        variant="outlined"
-                        value={password}
-                        onChange={(e) => handlePasswordChange(e.target.value)}
-                        error={!!passwordError}
-                        helperText={passwordError || ' '}
-                        sx={{
-                            '& .MuiOutlinedInput-root': {
-                                '& fieldset': {
-                                    borderColor: passwordError ? 'red' : password ? 'green' : 'inherit',
-                                },
-                            },
-                        }}
-                    />
-                    {password && !passwordError && (
-                        <CheckCircleIcon
-                            fontSize="small"
-                            style={{
-                                color: 'green',
-                                position: 'absolute',
-                                top: '50%',
-                                right: '-25px',
-                                transform: 'translateY(-50%)',
-                            }}
-                        />
-                    )}
-                    {passwordError && (
-                        <CloseIcon
-                            fontSize="small"
-                            style={{
-                                color: 'red',
-                                position: 'absolute',
-                                top: '50%',
-                                right: '-25px',
-                                transform: 'translateY(-50%)',
-                            }}
-                        />
-                    )}
-                </div>
-            </DialogContent>
-            <DialogActions>
-                <Button onClick={onClose}>Cancel</Button>
-                <Button onClick={handleRegister} variant="contained" color="primary">
-                    Register
-                </Button>
-            </DialogActions>
-        </Dialog>
+                        <FormControl error={!!emailError}>
+                            <FormLabel>Email</FormLabel>
+                            <Input
+                                type="email"
+                                value={email}
+                                onChange={(e) => handleEmailChange(e.target.value)}
+                                required
+                                endDecorator={
+                                    email && (
+                                        emailError ?
+                                            <CancelRoundedIcon color="error" /> :
+                                            <CheckCircleRoundedIcon color="success" />
+                                    )
+                                }
+                            />
+                            {emailError && (
+                                <Typography level="body-xs" color="danger">
+                                    {emailError}
+                                </Typography>
+                            )}
+                        </FormControl>
+
+                        <FormControl error={!!passwordError}>
+                            <FormLabel>Password</FormLabel>
+                            <Input
+                                type="password"
+                                value={password}
+                                onChange={(e) => handlePasswordChange(e.target.value)}
+                                required
+                                endDecorator={
+                                    password && (
+                                        passwordError ?
+                                            <CancelRoundedIcon color="error" /> :
+                                            <CheckCircleRoundedIcon color="success" />
+                                    )
+                                }
+                            />
+                            {passwordError && (
+                                <Typography level="body-xs" color="danger">
+                                    {passwordError}
+                                </Typography>
+                            )}
+                        </FormControl>
+
+                        <Stack direction="row" spacing={1} justifyContent="flex-end">
+                            <Button
+                                variant="plain"
+                                color="neutral"
+                                onClick={onClose}
+                            >
+                                Cancel
+                            </Button>
+                            <Button type="submit">
+                                Register
+                            </Button>
+                        </Stack>
+                    </Stack>
+                </form>
+            </Sheet>
+        </Modal>
     );
 };
 

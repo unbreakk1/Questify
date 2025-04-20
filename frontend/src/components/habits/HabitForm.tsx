@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextField, Button, MenuItem } from '@mui/material';
+import { Input, Button, FormControl, FormLabel, Select, Option } from '@mui/joy';
 import { createHabit } from '../../api/HabitsAPI';
 
 interface HabitFormProps {
@@ -34,44 +34,44 @@ const HabitForm: React.FC<HabitFormProps> = ({ onHabitCreated }) => {
 
     return (
         <form onSubmit={handleSubmit}>
-            <TextField
-                fullWidth
-                label="Habit Title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                margin="normal"
-                required
-            />
-            <TextField
-                select
-                label="Frequency"
-                value={frequency}
-                onChange={(e) => setFrequency(e.target.value)}
-                fullWidth
-                margin="normal"
-            >
-                <MenuItem value="DAILY">Daily</MenuItem>
-                <MenuItem value="WEEKLY">Weekly</MenuItem>
-                {/* Add other frequency options if needed */}
-            </TextField>
-            <TextField
-                select
-                label="Difficulty"
-                value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value)}
-                fullWidth
-                margin="normal"
-            >
-                <MenuItem value="EASY">Easy</MenuItem>
-                <MenuItem value="MEDIUM">Medium</MenuItem>
-                <MenuItem value="HARD">Hard</MenuItem>
-                {/* Add other difficulty options if needed */}
-            </TextField>
+            <FormControl sx={{ mb: 2 }}>
+                <FormLabel>Habit Title</FormLabel>
+                <Input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    required
+                />
+            </FormControl>
+
+            <FormControl sx={{ mb: 2 }}>
+                <FormLabel>Frequency</FormLabel>
+                <Select
+                    value={frequency}
+                    onChange={(_, newValue) => setFrequency(newValue || 'DAILY')}
+                >
+                    <Option value="DAILY">Daily</Option>
+                    <Option value="WEEKLY">Weekly</Option>
+                </Select>
+            </FormControl>
+
+            <FormControl sx={{ mb: 2 }}>
+                <FormLabel>Difficulty</FormLabel>
+                <Select
+                    value={difficulty}
+                    onChange={(_, newValue) => setDifficulty(newValue || 'EASY')}
+                >
+                    <Option value="EASY">Easy</Option>
+                    <Option value="MEDIUM">Medium</Option>
+                    <Option value="HARD">Hard</Option>
+                </Select>
+            </FormControl>
+
             <Button
                 type="submit"
-                variant="contained"
+                variant="solid"
                 color="primary"
-                style={{ marginTop: '16px' }}
+                sx={{ mt: 1 }}
+                fullWidth
             >
                 Create Habit
             </Button>

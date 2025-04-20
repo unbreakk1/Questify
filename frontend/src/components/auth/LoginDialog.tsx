@@ -1,14 +1,6 @@
 import React, {useState} from 'react';
 import { useNavigate } from 'react-router';
-import {
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    TextField,
-    Button,
-    Typography,
-} from '@mui/material';
+import { Modal, Sheet, Typography, FormControl, FormLabel, Input, Button } from '@mui/joy';
 import {loginUser} from '../../api/Auth';
 import axios, {AxiosError} from "axios";
 import {ErrorResponse} from "../../types/ErrorResponse.tsx";
@@ -60,37 +52,64 @@ const LoginDialog: React.FC<LoginDialogProps> = ({open, onClose}) =>
 
 
     return (
-        <Dialog open={open} onClose={onClose}>
-            <DialogTitle>Login</DialogTitle>
-            <DialogContent>
-                {error && <Typography color="error">{error}</Typography>}
-                <TextField
-                    autoFocus
-                    margin="dense"
-                    label="Username"
-                    type="text"
-                    fullWidth
-                    variant="outlined"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                />
-                <TextField
-                    margin="dense"
-                    label="Password"
-                    type="password"
-                    fullWidth
-                    variant="outlined"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                />
-            </DialogContent>
-            <DialogActions>
-                <Button onClick={onClose}>Cancel</Button>
-                <Button onClick={handleLogin} variant="contained" color="primary">
-                    Login
-                </Button>
-            </DialogActions>
-        </Dialog>
+        <Modal
+            open={open}
+            onClose={onClose}
+            sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+        >
+            <Sheet
+                variant="outlined"
+                sx={{
+                    width: 400,
+                    p: 3,
+                    borderRadius: 'md',
+                    boxShadow: 'lg',
+                }}
+            >
+                <Typography level="h4" component="h1" sx={{ mb: 2 }}>
+                    Welcome Back
+                </Typography>
+
+                {error && (
+                    <Typography
+                        color="danger"
+                        level="body-sm"
+                        sx={{ mb: 2 }}
+                    >
+                        {error}
+                    </Typography>
+                )}
+
+                <form onSubmit={handleLogin}>
+                    <FormControl sx={{ mb: 2 }}>
+                        <FormLabel>Username</FormLabel>
+                        <Input
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            required
+                        />
+                    </FormControl>
+
+                    <FormControl sx={{ mb: 2 }}>
+                        <FormLabel>Password</FormLabel>
+                        <Input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </FormControl>
+
+                    <Button
+                        type="submit"
+                        fullWidth
+                        sx={{ mb: 2 }}
+                    >
+                        Login
+                    </Button>
+                </form>
+            </Sheet>
+        </Modal>
     );
 };
 

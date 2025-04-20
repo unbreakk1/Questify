@@ -1,15 +1,17 @@
 import React from 'react';
 import {
-    Box,
     Modal,
+    ModalDialog,
     Typography,
     Grid,
     Card,
     CardContent,
     CardActions,
     Button,
-    CircularProgress
-} from '@mui/material';
+    CircularProgress,
+    Box,
+    Stack
+} from '@mui/joy';
 import {Boss, selectBoss} from '../../api/BossesAPI';
 
 interface BossSelectionModalProps {
@@ -43,58 +45,57 @@ const BossSelectionModal: React.FC<BossSelectionModalProps> = ({
         <Modal
             open={open}
             onClose={requireSelection ? undefined : onClose}
-            disableEscapeKeyDown={requireSelection}
-            disableBackdropClick={requireSelection}
         >
-            <Box sx={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: '80%',
-                maxWidth: 800,
-                bgcolor: 'background.paper',
-                boxShadow: 24,
-                p: 4,
-                borderRadius: 2
-            }}>
-                <Typography variant="h5" mb={3}>
+            <ModalDialog
+                sx={{
+                    width: '80%',
+                    maxWidth: 800,
+                    p: 3,
+                }}
+            >
+                <Typography level="h3" mb={2}>
                     Select Your Next Boss!
                 </Typography>
-                <Typography color="text.secondary" mb={2}>
+                <Typography level="body-md" mb={3} color="neutral">
                     You must select a boss to continue your journey
                 </Typography>
+
                 {loading ? (
                     <Box display="flex" justifyContent="center">
                         <CircularProgress />
                     </Box>
                 ) : (
-                    <Grid container spacing={2}>
+                    <Grid container spacing={2} sx={{ flexGrow: 1 }}>
                         {bosses.map((boss) => (
-                            <Grid item xs={12} sm={6} md={3} key={boss.id}>
-                                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                    <CardContent sx={{ flexGrow: 1 }}>
-                                        <Typography variant="h6" gutterBottom>
-                                            {boss.name}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            HP: {boss.maxHealth}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Level Req: {boss.levelRequirement}
-                                        </Typography>
-                                        <Typography variant="body2" color={boss.rare ? 'primary' : 'text.secondary'}>
-                                            {boss.rare ? '⭐ Rare Boss' : 'Normal Boss'}
-                                        </Typography>
-                                        <Typography variant="body2" color="success.main">
-                                            Rewards: {boss.rewards.xp}XP, {boss.rewards.gold}G
-                                        </Typography>
+                            <Grid xs={12} sm={6} md={3} key={boss.id}>
+                                <Card variant="outlined">
+                                    <CardContent>
+                                        <Stack spacing={1}>
+                                            <Typography level="h4">
+                                                {boss.name}
+                                            </Typography>
+                                            <Typography level="body-sm">
+                                                HP: {boss.maxHealth}
+                                            </Typography>
+                                            <Typography level="body-sm">
+                                                Level Req: {boss.levelRequirement}
+                                            </Typography>
+                                            <Typography
+                                                level="body-sm"
+                                                color={boss.rare ? 'warning' : 'neutral'}
+                                            >
+                                                {boss.rare ? '⭐ Rare Boss' : 'Normal Boss'}
+                                            </Typography>
+                                            <Typography level="body-sm" color="success">
+                                                Rewards: {boss.rewards.xp}XP, {boss.rewards.gold}G
+                                            </Typography>
+                                        </Stack>
                                     </CardContent>
                                     <CardActions>
                                         <Button
                                             fullWidth
-                                            variant="contained"
                                             onClick={() => handleSelectBoss(boss)}
+                                            color="primary"
                                         >
                                             Challenge
                                         </Button>
@@ -104,7 +105,7 @@ const BossSelectionModal: React.FC<BossSelectionModalProps> = ({
                         ))}
                     </Grid>
                 )}
-            </Box>
+            </ModalDialog>
         </Modal>
     );
 };

@@ -1,13 +1,16 @@
 import React, {useState, useEffect} from "react";
 import {
+    CssBaseline,
+    GlobalStyles,
     Box,
     Typography,
     Modal,
-    Fab,
-    AppBar,
-    Toolbar,
-    Button, CircularProgress,
-} from "@mui/material";
+    Button,
+    IconButton,
+    Sheet,
+    Stack,
+    CircularProgress,
+} from "@mui/joy";
 import AddIcon from "@mui/icons-material/Add";
 import {Client} from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
@@ -31,6 +34,140 @@ interface UserStatsUpdate
     level: number;
 }
 
+// Header Component
+const Header: React.FC<{
+    userStats: { username: string; gold: number; level: number } | null;
+    loading: boolean;
+    onUserClick: () => void;
+    onLogout: () => void;
+}> = ({ userStats, loading, onUserClick, onLogout }) => (
+    <Sheet
+        component="header"
+        variant="solid"
+        invertedColors
+        sx={{
+            position: 'fixed',
+            top: 0,
+            width: '100%',
+            zIndex: 9999,
+            p: 2,
+            background: 'linear-gradient(45deg, var(--joy-palette-primary-900), var(--joy-palette-primary-800))',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+        }}
+    >
+        <Typography level="h4">
+            Questify Dashboard
+        </Typography>
+
+        <Box display="flex" alignItems="center" gap={2}>
+            {loading ? (
+                <CircularProgress size="sm" />
+            ) : userStats ? (
+                <Stack direction="row" spacing={2} alignItems="center">
+                    <Typography
+                        level="title-lg"
+                        sx={{
+                            cursor: "pointer",
+                            textDecoration: "underline",
+                        }}
+                        onClick={onUserClick}
+                    >
+                        Welcome, {userStats.username}
+                    </Typography>
+                    <Typography level="body-md">
+                        Gold: {userStats.gold}
+                    </Typography>
+                    <Typography level="body-md">
+                        Level: {userStats.level}
+                    </Typography>
+                </Stack>
+            ) : (
+                <Typography level="body-md" color="danger">
+                    Failed to load user stats
+                </Typography>
+            )}
+            <Button
+                variant="soft"
+                color="neutral"
+                onClick={onLogout}
+            >
+                Logout
+            </Button>
+        </Box>
+    </Sheet>
+);
+
+// Main Content
+const ContentSection: React.FC<{
+    title: string;
+    onAdd: () => void;
+    children: React.ReactNode;
+}> = ({ title, onAdd, children }) => (
+    <Sheet
+        variant="outlined"
+        sx={{
+            flex: 1,
+            p: 2,
+            borderRadius: 'md',
+            background: 'var(--joy-palette-background-level1)',
+        }}
+    >
+        <Stack spacing={2}>
+            <Box
+                sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                }}
+            >
+                <Typography level="h4">{title}</Typography>
+                <IconButton
+                    variant="soft"
+                    color="primary"
+                    onClick={onAdd}
+                    size="sm"
+                >
+                    <AddIcon />
+                </IconButton>
+            </Box>
+            <Stack spacing={1}>
+                {children}
+            </Stack>
+        </Stack>
+    </Sheet>
+);
+
+// Boss Section Component
+const BossSection: React.FC<{
+    boss: BossResponse | null;
+    loading: boolean;
+}> = ({ boss, loading }) => (
+    <Sheet
+        variant="outlined"
+        sx={{
+            p: 2,
+            borderRadius: 'md',
+            background: 'var(--joy-palette-background-level1)',
+            width: '100%',
+            mb: 2,
+        }}
+    >
+        <Typography level="h4" mb={2}>
+            Active Boss
+        </Typography>
+        {loading ? (
+            <CircularProgress />
+        ) : boss ? (
+            <BossCard boss={boss} />
+        ) : (
+            <Typography level="body-md">
+                No active boss! Complete tasks or habits to summon one!
+            </Typography>
+        )}
+    </Sheet>
+);
 
 const DashboardPage: React.FC = () =>
 {
@@ -238,214 +375,124 @@ const DashboardPage: React.FC = () =>
     };
 
     return (
-        <>
-            {/* AppBar */}
-            <AppBar position="fixed" sx={{backgroundColor: "#1e1e1e"}}>
-                <Toolbar>
-                    <Typography variant="h6" sx={{flexGrow: 1, pl: 2}}>
-                        Questify Dashboard
-                    </Typography>
-                    {loading ? (
-                        <CircularProgress size={24} color="inherit"/>
-                    ) : userStats ? (
-                        <Box display="flex" alignItems="center">
-                            <Typography
-                                variant="body1"
-                                sx={{
-                                    mr: 2,
-                                    cursor: "pointer",
-                                    textDecoration: "underline",
-                                }}
-                                onClick={() => setOpenUserModal(true)} // Open modal on username click
-                            >
-                                Welcome, {userStats.username}
-                            </Typography>
-                            <Typography variant="body2" sx={{mx: 2}}>
-                                Gold: {userStats.gold}
-                            </Typography>
-                            <Typography variant="body2">Level: {userStats.level}</Typography>
-                        </Box>
-                    ) : (
-                        <Typography variant="body2" color="error">
-                            Failed to load user stats
-                        </Typography>
-                    )}
-                    <Button color="inherit" onClick={handleLogout}>
-                        Logout
-                    </Button>
-                </Toolbar>
-            </AppBar>
+        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+            <CssBaseline />
+            <GlobalStyles
+                styles={{
+                    ':root': {
+                        '--Header-height': '64px',
+                    },
+                }}
+            />
 
+            <Header
+                userStats={userStats}
+                loading={loading}
+                onUserClick={() => setOpenUserModal(true)}
+                onLogout={handleLogout}
+            />
 
-            {/* Main Content */}
             <Box
                 component="main"
                 sx={{
-                    pt: 10, // Push content below AppBar
-                    width: "100vw", // Occupy the entire screen width
-                    minHeight: "100vh", // Make the content fill the entire vertical space if needed
-                    display: "flex", // Flex to align tasks and habits
-                    justifyContent: "space-between", // Spread tasks and habits evenly
-                    alignItems: "flex-start", // Align at the top near AppBar
-                    px: 4, // Add padding to the left and right edges
-                    boxSizing: "border-box", // Ensure padding is considered within the layout
+                    mt: 'var(--Header-height)',
+                    p: 3,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2,
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    minHeight: 'calc(100vh - var(--Header-height))',
                 }}
             >
-                <Box
-                    sx={{
-                        mb: 4,
-                        padding: 2,
-                        backgroundColor: "darkgray",
-                        borderRadius: 2,
-                    }}
-                >
-                    <Typography variant="h5">Active Boss</Typography>
-                    {loadingBoss ? (
-                        <CircularProgress/>
-                    ) : boss ? (
-                        <BossCard boss={boss}/>
-                    ) : (
-                        <Typography>No active boss! Complete tasks or habits to summon one!</Typography>
-                    )}
-                </Box>
+                <BossSection boss={boss} loading={loadingBoss} />
 
-                {/* Tasks Section */}
                 <Box
                     sx={{
-                        flex: 1, // Evenly share horizontal space
-                        padding: 2,
-                        backgroundColor: "darkgrey", // Light gray background
-                        borderRadius: 2,
-                        marginRight: "16px", // Add horizontal gap between tasks and habits
+                        display: 'flex',
+                        gap: 2,
+                        width: '100%',
                     }}
                 >
-                    {/* Tasks Header */}
-                    <Box
-                        sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            marginBottom: 2,
-                        }}
+                    <ContentSection
+                        title="Tasks"
+                        onAdd={() => setOpenModal("task")}
                     >
-                        <Typography variant="h5">Tasks</Typography>
-                        <Fab
-                            size="small"
-                            color="primary"
-                            aria-label="add-task"
-                            onClick={() => setOpenModal("task")}
-                        >
-                            <AddIcon/>
-                        </Fab>
-                    </Box>
+                        {tasks.map((task) => (
+                            <TaskCard
+                                key={task.id}
+                                {...task}
+                                onComplete={handleCompleteTask}
+                                onDelete={handleDeleteTask}
+                            />
+                        ))}
+                    </ContentSection>
 
-                    {/* Task Cards */}
-                    {tasks.map((task) => (
-                        <TaskCard
-                            key={task.id}
-                            {...task}
-                            onComplete={handleCompleteTask}
-                            onDelete={handleDeleteTask}
-                        />
-                    ))}
-                </Box>
-
-                {/* Habits Section */}
-                <Box
-                    sx={{
-                        flex: 1, // Evenly share horizontal space
-                        padding: 2,
-                        backgroundColor: "darkgrey", // Light gray background
-                        borderRadius: 2,
-                        marginLeft: "16px", // Add the gap
-                    }}
-                >
-                    {/* Habits Header */}
-                    <Box
-                        sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            marginBottom: 2,
-                        }}
+                    <ContentSection
+                        title="Habits"
+                        onAdd={() => setOpenModal("habit")}
                     >
-                        <Typography variant="h5">Habits</Typography>
-                        <Fab
-                            size="small"
-                            color="secondary"
-                            aria-label="add-habit"
-                            onClick={() => setOpenModal("habit")}
-                        >
-                            <AddIcon/>
-                        </Fab>
-                    </Box>
-
-                    {/* Habit Cards */}
-                    {habits.map((habit) => (
-                        <HabitCard
-                            key={habit.id}
-                            habit={habit}
-                            onComplete={handleCompleteHabit}
-                            onDelete={handleDeleteHabit}
-                            onReset={async (habitId) =>
-                            {
-                                await completeHabit(habitId);
-                                const updatedHabits = await getAllHabits();
-                                setHabits(updatedHabits);
-                            }}
-                        />
-                    ))}
+                        {habits.map((habit) => (
+                            <HabitCard
+                                key={habit.id}
+                                habit={habit}
+                                onComplete={handleCompleteHabit}
+                                onDelete={handleDeleteHabit}
+                                onReset={async (habitId) => {
+                                    await completeHabit(habitId);
+                                    const updatedHabits = await getAllHabits();
+                                    setHabits(updatedHabits);
+                                }}
+                            />
+                        ))}
+                    </ContentSection>
                 </Box>
             </Box>
 
+            {/* Modals */}
             <UserDetailsModal
-                open={openUserModal} // Use the state for modal visibility
-                onClose={() => setOpenUserModal(false)} // Properly toggle modal off
-                username={userStats?.username} // Pass the username prop here
+                open={openUserModal}
+                onClose={() => setOpenUserModal(false)}
+                username={userStats?.username}
             />
+
             <BossSelectionModal
                 open={showBossSelection}
                 onClose={() => setShowBossSelection(false)}
                 bosses={availableBosses}
-                onBossSelected={async () =>
-                {
-                    try
-                    {
+                onBossSelected={async () => {
+                    try {
                         const refreshedBoss = await getActiveBoss();
                         setBoss(refreshedBoss);
-                        setShowBossSelection(false); // Only close after successful selection
-                    } catch (error)
-                    {
+                        setShowBossSelection(false);
+                    } catch (error) {
                         console.error('Failed to get active boss:', error);
                     }
                 }}
                 loading={loadingBossSelection}
-                requireSelection={!boss} // This ensures the modal can't be closed if there's no active boss
+                requireSelection={!boss}
             />
 
-
-            {/* Modal for Adding */}
             <Modal
                 open={Boolean(openModal)}
                 onClose={() => setOpenModal(null)}
             >
-                <Box
+                <Sheet
+                    variant="outlined"
                     sx={{
                         position: "absolute",
                         top: "50%",
                         left: "50%",
                         transform: "translate(-50%, -50%)",
-                        backgroundColor: "white",
-                        boxShadow: 24,
-                        padding: 4,
-                        borderRadius: 2,
-                        minWidth: "300px",
+                        width: 400,
+                        p: 3,
+                        borderRadius: 'md',
+                        boxShadow: 'lg',
                     }}
                 >
                     {openModal === "task" ? (
                         <TaskForm
-                            onTaskCreated={async () =>
-                            {
+                            onTaskCreated={async () => {
                                 const updatedTasks = await getAllTasks();
                                 setTasks(updatedTasks);
                                 setOpenModal(null);
@@ -453,17 +500,16 @@ const DashboardPage: React.FC = () =>
                         />
                     ) : (
                         <HabitForm
-                            onHabitCreated={async () =>
-                            {
+                            onHabitCreated={async () => {
                                 const updatedHabits = await getAllHabits();
                                 setHabits(updatedHabits);
                                 setOpenModal(null);
                             }}
                         />
                     )}
-                </Box>
+                </Sheet>
             </Modal>
-        </>
+        </Box>
     );
 };
 

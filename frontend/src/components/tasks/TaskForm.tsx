@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TextField, Button } from '@mui/material';
+import { Input, Button, FormControl, FormLabel } from '@mui/joy';
 import { createTask } from '../../api/TasksAPI';
 
 const TaskForm: React.FC<{ onTaskCreated: () => void }> = ({ onTaskCreated }) => {
@@ -18,25 +18,36 @@ const TaskForm: React.FC<{ onTaskCreated: () => void }> = ({ onTaskCreated }) =>
 
     return (
         <form onSubmit={handleSubmit}>
-            <TextField
-                label="Task Title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                fullWidth
-            />
-            <TextField
-                label="Due Date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                fullWidth
-                type="date"
-                InputLabelProps={{ shrink: true }}
-            />
+            <FormControl sx={{ mb: 2 }}>
+                <FormLabel>Task Title</FormLabel>
+                <Input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    required
+                />
+            </FormControl>
+
+            <FormControl sx={{ mb: 2 }}>
+                <FormLabel>Due Date</FormLabel>
+                <Input
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    type="date"
+                    slotProps={{
+                        input: {
+                            min: new Date().toISOString().split('T')[0],
+                        },
+                    }}
+                    required
+                />
+            </FormControl>
+
             <Button
                 type="submit"
-                variant="outlined"
+                variant="solid"
                 color="primary"
-                style={{ marginTop: '8px' }}
+                sx={{ mt: 1 }}
+                fullWidth
             >
                 Create Task
             </Button>
@@ -45,3 +56,4 @@ const TaskForm: React.FC<{ onTaskCreated: () => void }> = ({ onTaskCreated }) =>
 };
 
 export default TaskForm;
+
