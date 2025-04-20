@@ -67,27 +67,23 @@ public class BossController
 
     @PostMapping("/select/{bossId}")
     @ResponseStatus(HttpStatus.OK)
-    public String selectBoss(Authentication authentication, @PathVariable String bossId)
-    {
-        // Get the currently authenticated user identifier (username or ID)
+    public String selectBoss(Authentication authentication, @PathVariable String bossId) {
         String identifier = authentication.getName();
-
-        // Fetch the user information
         User user = userService.getUserBasicDetails(identifier);
 
-        // Verify if the boss exists
         Boss boss = bossService.getBossById(bossId);
-        if (boss == null)
-        {
+        if (boss == null) {
             throw new IllegalArgumentException("Invalid boss ID: " + bossId);
         }
 
-        // Update the user's current boss selection
+        // Update the user's current boss selection and initialize progress
+        bossService.initializeUserBossProgress(user.getId(), bossId, boss.getMaxHealth());
         user.setCurrentBossId(bossId);
-        userService.saveUser(user); // Persist the update to the database
+        userService.saveUser(user);
 
         return "Boss '" + boss.getName() + "' successfully selected for user " + user.getUsername();
     }
+
 
 
     @PostMapping("/fight/{bossId}")

@@ -1,6 +1,8 @@
 package org.example.backend.dto;
 
+import org.example.backend.entity.Boss;
 import org.example.backend.entity.Boss.Rewards;
+import org.example.backend.entity.UserBossProgress;
 
 public class BossResponse
 {
@@ -11,52 +13,60 @@ public class BossResponse
     private boolean defeated;
     private Rewards rewards;
     private boolean rare;
+    private int levelRequirement;
 
-    public BossResponse(String id, String name, int maxHealth, int currentHealth, boolean defeated, Rewards rewards, boolean rare)
-    {
-        this.id = id;
-        this.name = name;
-        this.maxHealth = maxHealth;
-        this.currentHealth = currentHealth;
-        this.defeated = defeated;
-        this.rewards = rewards;
-        this.rare = rare;
+    // Constructor with Boss and UserBossProgress
+    public BossResponse(Boss boss, UserBossProgress progress) {
+        this.id = boss.getId();
+        this.name = boss.getName();
+        this.maxHealth = boss.getMaxHealth();
+        this.rewards = boss.getRewards();
+        this.rare = boss.isRare();
+        this.levelRequirement = boss.getLevelRequirement();
+
+        // Get values from progress if available, otherwise use defaults
+        if (progress != null) {
+            this.currentHealth = progress.getCurrentHealth();
+            this.defeated = progress.isDefeated();
+        } else {
+            this.currentHealth = boss.getMaxHealth();
+            this.defeated = false;
+        }
     }
 
-    // Getters
-    public String getId()
-    {
+    // Add all getters (no setters needed for DTO)
+    public String getId() {
         return id;
     }
 
-    public String getName()
-    {
+    public String getName() {
         return name;
     }
 
-    public int getMaxHealth()
-    {
+    public int getMaxHealth() {
         return maxHealth;
     }
 
-    public int getCurrentHealth()
-    {
+    public int getCurrentHealth() {
         return currentHealth;
     }
 
-    public boolean isDefeated()
-    {
+    public boolean isDefeated() {
         return defeated;
     }
 
-    public Rewards getRewards()
-    {
+    public Rewards getRewards() {
         return rewards;
     }
 
-    public boolean isRare()
-    {
+    public boolean isRare() {
         return rare;
     }
+
+    public int getLevelRequirement() {
+        return levelRequirement;
+    }
 }
+
+
 
