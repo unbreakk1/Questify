@@ -14,16 +14,18 @@ import java.util.List;
 @Service
 public class BossService
 {
+    private final WebSocketService webSocketService;
     private final BossRepository bossRepository;
     private final UserService userService;
     private final UserRepository userRepository;
     private final UserBossProgressRepository userBossProgressRepository;
 
-    public BossService(BossRepository bossRepository,
+    public BossService(WebSocketService webSocketService, BossRepository bossRepository,
                        UserService userService,
                        UserRepository userRepository,
                        UserBossProgressRepository userBossProgressRepository)
     {
+        this.webSocketService = webSocketService;
         this.bossRepository = bossRepository;
         this.userService = userService;
         this.userRepository = userRepository;
@@ -125,6 +127,9 @@ public class BossService
 
         // Save final state
         userService.saveUser(updatedUser);
+
+        webSocketService.sendUserStatsUpdate(username, updatedUser.getGold(), updatedUser.getLevel());
+
 
         System.out.printf("User %s defeated boss %s and received: %d XP, %d gold, badge: %s%n",
                 userId, boss.getName(), xpReward, goldReward, badgeReward);

@@ -9,6 +9,8 @@ import {
     Button, CircularProgress,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import {Client} from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
 
 import {getUsernameFromToken, getUserInfo} from "../utils/UserAPI.tsx";
 import UserDetailsModal from "../components/users/UserDetailsModal.tsx";
@@ -21,6 +23,13 @@ import {getAllHabits, completeHabit, deleteHabit, Habit} from "../api/HabitsAPI"
 import {getActiveBoss, attackBoss, BossResponse, getBossSelection, Boss} from "../api/BossesAPI";
 import BossCard from "../components/bosses/BossCard.tsx";
 import BossSelectionModal from '../components/bosses/BossSelectionModal';
+
+interface UserStatsUpdate
+{
+    userId: string;
+    gold: number;
+    level: number;
+}
 
 
 const DashboardPage: React.FC = () =>
@@ -36,20 +45,54 @@ const DashboardPage: React.FC = () =>
     const [showBossSelection, setShowBossSelection] = useState(false);
     const [availableBosses, setAvailableBosses] = useState<Boss[]>([]);
     const [loadingBossSelection, setLoadingBossSelection] = useState(false);
+    const [stompClient, setStompClient] = useState<Client | null>(null);
 
 
     useEffect(() =>
     {
+        // Initialize WebSocket connection
+        const initializeWebSocket = () =>
+        {
+            const client = new Client({
+                webSocketFactory: () => new SockJS('http://localhost:8080/ws', null, {
+                    transports: ['websocket', 'xhr-streaming', 'xhr-polling']
+                }),
+                onConnect: () =>
+                {
+                    console.log('WebSocket Connected!');
+                    const username = getUsernameFromToken();
+                    if (username)
+                    {
+                        client.subscribe(`/topic/user-stats/${username}`, (message) =>
+                        {
+                            const update: UserStatsUpdate = JSON.parse(message.body);
+                            setUserStats(prevStats => ({
+                                ...prevStats!,
+                                gold: update.gold,
+                                level: update.level
+                            }));
+                        });
+                    }
+                },
+                onStompError: (frame) =>
+                {
+                    console.error('WebSocket Error:', frame);
+                }
+            });
+
+            client.activate();
+            setStompClient(client);
+        };
+
+
+        // Fetch initial data
         const fetchData = async () =>
         {
             const tasksData = await getAllTasks();
             const habitsData = await getAllHabits();
-            // const activeBoss = await getActiveBoss();
-
             setTasks(tasksData);
             setHabits(habitsData);
-            //console.log("Active Boss:", activeBoss);
-            //setBoss(activeBoss);
+
             try
             {
                 const activeBoss = await getActiveBoss();
@@ -67,7 +110,6 @@ const DashboardPage: React.FC = () =>
                     console.error("Error fetching active boss:", error);
                 }
             }
-
 
             const username = getUsernameFromToken();
             if (!username)
@@ -89,28 +131,41 @@ const DashboardPage: React.FC = () =>
                 console.error("Failed to fetch user stats:", error);
             } finally
             {
-                setLoading(false); // Ensure loading state is turned off
+                setLoading(false);
                 setLoadingBoss(false);
             }
         };
 
+        initializeWebSocket();
         fetchData();
+
+        // Cleanup WebSocket connection when component unmounts
+        return () =>
+        {
+            if (stompClient)
+            {
+                stompClient.deactivate();
+            }
+        };
     }, []);
 
-    const handleBossDefeat = async () => {
+    const handleBossDefeat = async () =>
+    {
         setLoadingBossSelection(true);
-        try {
+        try
+        {
             const bosses = await getBossSelection();
             setAvailableBosses(bosses);
             setBoss(null); // Clear the current boss when defeated
             setShowBossSelection(true);
-        } catch (error) {
+        } catch (error)
+        {
             console.error('Failed to fetch boss selection:', error);
-        } finally {
+        } finally
+        {
             setLoadingBossSelection(false);
         }
     };
-
 
     const handleCompleteTask = async (taskId: string) =>
     {
@@ -165,7 +220,6 @@ const DashboardPage: React.FC = () =>
         }
     };
 
-
     const handleDeleteHabit = async (habitId: string) =>
     {
         await deleteHabit(habitId);
@@ -174,6 +228,11 @@ const DashboardPage: React.FC = () =>
 
     const handleLogout = () =>
     {
+        if (stompClient)
+        {
+            stompClient.deactivate();
+        }
+
         localStorage.removeItem("token");
         window.location.href = "/";
     };
@@ -348,20 +407,21 @@ const DashboardPage: React.FC = () =>
                 open={showBossSelection}
                 onClose={() => setShowBossSelection(false)}
                 bosses={availableBosses}
-                onBossSelected={async () => {
-                    try {
+                onBossSelected={async () =>
+                {
+                    try
+                    {
                         const refreshedBoss = await getActiveBoss();
                         setBoss(refreshedBoss);
                         setShowBossSelection(false); // Only close after successful selection
-                    } catch (error) {
+                    } catch (error)
+                    {
                         console.error('Failed to get active boss:', error);
                     }
                 }}
                 loading={loadingBossSelection}
                 requireSelection={!boss} // This ensures the modal can't be closed if there's no active boss
             />
-
-
 
 
             {/* Modal for Adding */}

@@ -1,8 +1,10 @@
 package org.example.backend.service;
 
+import org.example.backend.dto.UserStatsUpdate;
 import org.example.backend.entity.User;
 import org.example.backend.exceptions.UserAlreadyExistsException;
 import org.example.backend.repository.UserRepository;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -23,12 +25,29 @@ public class UserService implements UserDetailsService
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SimpMessagingTemplate messagingTemplate;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder)
+
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, SimpMessagingTemplate messagingTemplate)
     {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.messagingTemplate = messagingTemplate;
     }
+
+    private void sendUserStatsUpdate(User user)
+    {
+        UserStatsUpdate update = new UserStatsUpdate(
+                user.getId(),
+                user.getGold(),
+                user.getLevel()
+        );
+        messagingTemplate.convertAndSend(
+                "/topic/user-stats/" + user.getId(),
+                update
+        );
+    }
+
 
     // Register a new user
     public User registerUser(String username, String email, String rawPassword)
@@ -59,7 +78,9 @@ public class UserService implements UserDetailsService
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        sendUserStatsUpdate(savedUser);
+        return savedUser;
     }
 
 
@@ -109,11 +130,9 @@ public class UserService implements UserDetailsService
     {
         User user = resolveUser(identifier);
 
-        System.out.printf("Recieved XP: %d, forName: %s%n", experience, identifier);
         // Update XP if provided
         if (experience != null)
         {
-            System.out.printf("Updating XP for user %s with %d XP%n", identifier, experience);
             user.setExperience(user.getExperience() + experience);
 
             // Check for level-up
@@ -123,24 +142,21 @@ public class UserService implements UserDetailsService
                 user.setExperience(user.getExperience() - xpForNextLevel); // Carry extra XP to next level
                 user.setLevel(user.getLevel() + 1); // Increment the user's level
 
-                // Recalculate XP for the next level
+
                 xpForNextLevel = 100 * user.getLevel();
             }
         }
 
-        // Update streak if provided
         if (streak != null)
         {
             user.setStreak(streak);
         }
 
-        // Save user
-        saveUser(user);
-        System.out.printf("User saved with Final XP: %d | Final Level: %d%n",
-                user.getExperience(), user.getLevel());
+        User savedUser = saveUser(user);
+        sendUserStatsUpdate(savedUser);
 
 
-        return user;
+        return savedUser;
     }
 
 
@@ -200,24 +216,22 @@ public class UserService implements UserDetailsService
                 .orElseThrow(() -> new IllegalArgumentException("User with username '" + identifier + "' not found."));
     }
 
-    public User saveUser(User user) {
-        System.out.printf("Before save - Username: %s, XP: %d, Level: %d%n",
-                user.getUsername(), user.getExperience(), user.getLevel());
-
+    public User saveUser(User user)
+    {
         User savedUser = userRepository.save(user);
-
-        // Verify the saved state
-        System.out.printf("After save - Username: %s, XP: %d, Level: %d%n",
-                savedUser.getUsername(), savedUser.getExperience(), savedUser.getLevel());
 
         // Immediately fetch from DB to verify persistence
         User verifiedUser = userRepository.findByUsername(user.getUsername()).orElse(null);
-        if (verifiedUser != null) {
+        if (verifiedUser != null)
+        {
             System.out.printf("Verified in DB - Username: %s, XP: %d, Level: %d%n",
                     verifiedUser.getUsername(), verifiedUser.getExperience(), verifiedUser.getLevel());
-        } else {
+        } else
+        {
             System.out.println("Failed to verify user in DB after save!");
         }
+
+        sendUserStatsUpdate(savedUser);
 
         return savedUser;
     }

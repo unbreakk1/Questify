@@ -16,6 +16,9 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.cors.CorsConfigurationSource;
 
+import java.util.Arrays;
+import java.util.List;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig
@@ -36,7 +39,7 @@ public class SecurityConfig
         return http
                 .csrf(csrf -> csrf.disable()) // Disable CSRF for non-browser API clients
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/", "/index.html", "/assets/**").permitAll()
+                        .requestMatchers("/auth/**", "/", "/index.html", "/assets/**", "/ws/**").permitAll()
                         .anyRequest().authenticated()) // Secure endpoints except for permitted ones
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -49,10 +52,10 @@ public class SecurityConfig
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOriginPattern("*"); // Allow all origins (wildcard)
-        configuration.addAllowedHeader("*");       // Allow all headers
-        configuration.addAllowedMethod("*");       // Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
-        configuration.setAllowCredentials(true);   // Allow credentials (if needed)
+        configuration.addAllowedOriginPattern("http://localhost:5173");
+        configuration.addAllowedHeader("*");
+        configuration.addAllowedMethod("*");
+        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration); // Apply to all endpoints
