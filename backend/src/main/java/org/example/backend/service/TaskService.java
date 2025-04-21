@@ -7,8 +7,8 @@ import org.example.backend.repository.TaskRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class TaskService
@@ -34,27 +34,34 @@ public class TaskService
     }
 
     // Retrieve all tasks for a specific user on a given day
-    public List<TaskResponse> getAllTasksForUser(String userId)
-    {
+    public List<TaskResponse> getAllTasksForUser(String userId) {
         List<Task> tasks = taskRepository.findByUserId(userId);
+        LocalDate today = LocalDate.now();
 
-        LocalDate today = LocalDate.now(); // Today’s date
+        System.out.println("Found " + tasks.size() + " tasks for user: " + userId);
 
-        // Reset tasks that are past the cooldown period (e.g., not completed today)
-        tasks.forEach(task ->
-        {
-            if (task.isCompleted() && !today.toString().equals(task.getLastCompletedDate()))
-            {
-                task.setCompleted(false); // Reset completed status
-                task.setLastCompletedDate(null); // Clear lastCompletedDate if task is reset
-                taskRepository.save(task); // Save updated task (optional for persistence)
+        List<Task> tasksToUpdate = new ArrayList<>();
+
+        // First, collect tasks that need updating
+        for (Task task : tasks) {
+            if (task.isCompleted() && !today.toString().equals(task.getLastCompletedDate())) {
+                task.setCompleted(false);
+                task.setLastCompletedDate(null);
+                tasksToUpdate.add(task);
             }
-        });
+        }
 
+        // Then, if there are any tasks to update, save them all at once
+        if (!tasksToUpdate.isEmpty()) {
+            taskRepository.saveAll(tasksToUpdate);
+        }
+
+        // Return the responses
         return tasks.stream()
                 .map(task -> new TaskResponse(task.getId(), task.getTitle(), task.isCompleted(), task.getDueDate()))
-                .collect(Collectors.toList());
+                .toList();
     }
+
 
 
     // Mark a task as completed

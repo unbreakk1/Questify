@@ -21,6 +21,7 @@ public class Boss {
         private int gold;
         private int xp; // Experience points
         private String badge; // Badge or reward name
+        private boolean hasCausedLevelUp;
 
         public int getGold()
         {
@@ -46,6 +47,15 @@ public class Boss {
 
         public void setBadge(String badge) {
             this.badge = badge;
+        }
+
+        public boolean getHasCausedLevelUp()
+        {
+            return hasCausedLevelUp;
+        }
+        public void setCausedLevelUp(boolean hasCausedLevelUp)
+        {
+            this.hasCausedLevelUp = hasCausedLevelUp;
         }
     }
 

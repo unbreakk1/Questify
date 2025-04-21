@@ -15,9 +15,11 @@ interface RewardAnimationProps
 
 const RewardAnimation: React.FC<RewardAnimationProps> = ({gold, xp, levelUp, onComplete}) =>
 {
+    console.log('RewardAnimation props:', { gold, xp, levelUp });
+
     useEffect(() =>
     {
-        if (gold || xp || levelUp)
+        if (gold !== undefined || xp !== undefined || levelUp === true)
         {
             const timeout = setTimeout(() =>
             {
@@ -26,6 +28,7 @@ const RewardAnimation: React.FC<RewardAnimationProps> = ({gold, xp, levelUp, onC
             return () => clearTimeout(timeout);
         }
     }, [gold, xp, levelUp, onComplete]);
+
 
     return (
         <AnimatePresence>

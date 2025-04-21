@@ -43,7 +43,7 @@ public class UserService implements UserDetailsService
                 user.getLevel()
         );
         messagingTemplate.convertAndSend(
-                "/topic/user-stats/" + user.getId(),
+                "/topic/user-stats/" + user.getUsername(),
                 update
         );
     }
@@ -230,8 +230,6 @@ public class UserService implements UserDetailsService
         {
             System.out.println("Failed to verify user in DB after save!");
         }
-
-        sendUserStatsUpdate(savedUser);
 
         return savedUser;
     }

@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -33,6 +34,8 @@ public class TaskController
     @ResponseStatus(HttpStatus.OK) // 200 OK, successfully retrieved tasks
     public List<TaskResponse> getAllTasks(Authentication authentication)
     {
+        System.out.println("GET /tasks called at: " + LocalDateTime.now());
+
         String userId = authentication.getName(); // Extract user ID from the authentication context
 
         // Retrieve all tasks for the user

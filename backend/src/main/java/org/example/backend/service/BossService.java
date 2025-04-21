@@ -124,8 +124,7 @@ public class BossService
         return bossRepository.findById(bossId).isPresent();
     }
 
-    private void handleBossDefeat(Boss boss, String userId)
-    {
+    private void handleBossDefeat(Boss boss, String userId) {
         // Extract rewards from the boss
         int xpReward = boss.getRewards().getXp();
         int goldReward = boss.getRewards().getGold();
@@ -135,27 +134,35 @@ public class BossService
         User user = userService.getUserBasicDetails(userId);
         String username = user.getUsername();
 
+        // Store initial level
+        int initialLevel = user.getLevel();
+
         // Update user XP and level
         User updatedUser = userService.updateUserDetails(username, xpReward, null, null);
+
+        // Check if level up occurred
+        boolean causedLevelUp = updatedUser.getLevel() > initialLevel;
 
         // Update gold
         updatedUser.setGold(updatedUser.getGold() + goldReward);
 
         // Add badge if not already owned
-        if (!updatedUser.hasBadge(badgeReward))
-        {
+        if (!updatedUser.hasBadge(badgeReward)) {
             updatedUser.addBadge(badgeReward);
         }
 
         // Save final state
         userService.saveUser(updatedUser);
 
+        // Include the levelUp status in the response
+        boss.getRewards().setCausedLevelUp(causedLevelUp);
+
         webSocketService.sendUserStatsUpdate(username, updatedUser.getGold(), updatedUser.getLevel());
 
-
-        System.out.printf("User %s defeated boss %s and received: %d XP, %d gold, badge: %s%n",
-                userId, boss.getName(), xpReward, goldReward, badgeReward);
+        System.out.printf("User %s defeated boss %s and received: %d XP, %d gold, badge: %s, Level Up: %b%n",
+                userId, boss.getName(), xpReward, goldReward, badgeReward, causedLevelUp);
     }
+
 
     public Boss getBossById(String bossId)
     {

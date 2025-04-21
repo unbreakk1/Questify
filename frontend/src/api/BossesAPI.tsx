@@ -33,6 +33,7 @@ export interface BossResponse
         gold: number;
         xp: number;
         badge: string;
+        hasCausedLevelUp?: boolean;
     };
 
 
