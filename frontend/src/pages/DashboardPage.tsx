@@ -28,6 +28,9 @@ import BossSelectionModal from '../components/bosses/BossSelectionModal';
 import AttackAnimation from '../components/animations/AttackAnimation';
 import RewardAnimation from '../components/animations/RewardAnimation';
 import AnimatedBossCard from '../components/bosses/AnimatedBossCard';
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+
 
 
 interface UserStatsUpdate
@@ -38,12 +41,60 @@ interface UserStatsUpdate
 }
 
 // Header Component
+const StatsBox: React.FC<{
+    icon: React.ReactNode;
+    value: number;
+    color: string;
+    glowColor: string;
+}> = ({ icon, value, color, glowColor }) => (
+    <Box
+        sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            background: `linear-gradient(135deg, ${color}40 0%, ${color}20 100%)`,
+            borderRadius: 'md',
+            padding: '4px 12px',
+            border: `2px solid ${color}`,
+            boxShadow: `0 0 10px ${glowColor}`,
+            transition: 'all 0.2s ease-in-out',
+            '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: `0 0 15px ${glowColor}`,
+            },
+        }}
+    >
+        <Box
+            sx={{
+                display: 'flex',
+                alignItems: 'center',
+                animation: 'float 3s ease-in-out infinite',
+                '@keyframes float': {
+                    '0%, 100%': { transform: 'translateY(0)' },
+                    '50%': { transform: 'translateY(-4px)' },
+                },
+            }}
+        >
+            {icon}
+        </Box>
+        <Typography
+            level="title-lg"
+            sx={{
+                fontWeight: 'bold',
+                textShadow: `0 0 5px ${glowColor}`,
+            }}
+        >
+            {value}
+        </Typography>
+    </Box>
+);
+
 const Header: React.FC<{
     userStats: { username: string; gold: number; level: number } | null;
     loading: boolean;
     onUserClick: () => void;
     onLogout: () => void;
-}> = ({userStats, loading, onUserClick, onLogout}) => (
+}> = ({ userStats, loading, onUserClick, onLogout }) => (
     <Sheet
         component="header"
         variant="solid"
@@ -58,6 +109,8 @@ const Header: React.FC<{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            borderBottom: '2px solid',
+            borderColor: 'primary.outlinedBorder',
         }}
     >
         <Typography level="h4">
@@ -66,25 +119,52 @@ const Header: React.FC<{
 
         <Box display="flex" alignItems="center" gap={2}>
             {loading ? (
-                <CircularProgress size="sm"/>
+                <CircularProgress size="sm" />
             ) : userStats ? (
                 <Stack direction="row" spacing={2} alignItems="center">
                     <Typography
                         level="title-lg"
                         sx={{
                             cursor: "pointer",
-                            textDecoration: "underline",
+                            position: 'relative',
+                            '&:hover::after': {
+                                width: '100%',
+                            },
+                            '&::after': {
+                                content: '""',
+                                position: 'absolute',
+                                bottom: -2,
+                                left: 0,
+                                width: '0%',
+                                height: '2px',
+                                backgroundColor: 'primary.300',
+                                transition: 'width 0.3s ease-in-out',
+                            },
                         }}
                         onClick={onUserClick}
                     >
-                        Welcome, {userStats.username}
+                        {userStats.username}
                     </Typography>
-                    <Typography level="body-md">
-                        Gold: {userStats.gold}
-                    </Typography>
-                    <Typography level="body-md">
-                        Level: {userStats.level}
-                    </Typography>
+
+                    <StatsBox
+                        icon={<MonetizationOnIcon sx={{
+                            color: 'warning.300',
+                            fontSize: '1.5rem',
+                        }} />}
+                        value={userStats.gold}
+                        color="#FFD700"
+                        glowColor="rgba(255, 215, 0, 0.5)"
+                    />
+
+                    <StatsBox
+                        icon={<EmojiEventsIcon sx={{
+                            color: 'primary.300',
+                            fontSize: '1.5rem',
+                        }} />}
+                        value={userStats.level}
+                        color="#4CAF50"
+                        glowColor="rgba(76, 175, 80, 0.5)"
+                    />
                 </Stack>
             ) : (
                 <Typography level="body-md" color="danger">
@@ -95,12 +175,19 @@ const Header: React.FC<{
                 variant="soft"
                 color="neutral"
                 onClick={onLogout}
+                sx={{
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                        transform: 'translateY(-2px)',
+                    },
+                }}
             >
                 Logout
             </Button>
         </Box>
     </Sheet>
 );
+
 
 // Main Content
 const ContentSection: React.FC<{
@@ -303,10 +390,6 @@ const DashboardPage: React.FC = () =>
                 const updatedTasks = await getAllTasks();
                 setTasks(updatedTasks);
 
-                setRewardAnimation({
-                    gold: 50,
-                    xp: 25
-                });
 
                 if (boss)
                 {
@@ -349,10 +432,6 @@ const DashboardPage: React.FC = () =>
                 const updatedBossResponse = await attackBoss(750); // Example: Completing habit deals 5 damage
                 setBoss(updatedBossResponse);
 
-                setRewardAnimation({
-                    gold: 75,
-                    xp: 35
-                });
 
                 if (updatedBossResponse.currentHealth === 0)
                 {
