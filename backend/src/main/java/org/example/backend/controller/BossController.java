@@ -58,10 +58,10 @@ public class BossController
     @ResponseStatus(HttpStatus.OK)
     public List<Boss> getBossSelection(Authentication authentication)
     {
-        // Get identifier (username or _id)
+
         String identifier = authentication.getName();
-        User user = userService.getUserBasicDetails(identifier); // Safely resolve user
-        return bossService.getBossSelection(user.getLevel()); // Pass user level
+        User user = userService.getUserBasicDetails(identifier);
+        return bossService.getBossSelection();
     }
 
 

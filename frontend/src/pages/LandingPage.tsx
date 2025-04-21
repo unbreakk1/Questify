@@ -115,7 +115,6 @@ const LandingPage: React.FC = () =>
     const [isLoginOpen, setIsLoginOpen] = useState(false);
     const [isRegisterOpen, setIsRegisterOpen] = useState(false);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-    // Form state for Login
     const [loginUsername, setLoginUsername] = useState('');
     const [loginPassword, setLoginPassword] = useState('');
     const [loginError, setLoginError] = useState('');

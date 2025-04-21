@@ -9,7 +9,9 @@ import org.example.backend.repository.UserBossProgressRepository;
 import org.example.backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class BossService
@@ -32,11 +34,14 @@ public class BossService
         this.userBossProgressRepository = userBossProgressRepository;
     }
 
-    public BossResponse getActiveBoss(String userId) {
+
+    public BossResponse getActiveBoss(String userId)
+    {
         User user = userService.getUserBasicDetails(userId);
         String currentBossId = user.getCurrentBossId();
 
-        if (currentBossId == null) {
+        if (currentBossId == null)
+        {
             throw new IllegalArgumentException("User is not currently fighting any boss.");
         }
 
@@ -53,9 +58,26 @@ public class BossService
 
     public UserBossProgress initializeUserBossProgress(String userId, String bossId, int maxHealth)
     {
-        UserBossProgress progress = new UserBossProgress(userId, bossId, maxHealth);
-        return userBossProgressRepository.save(progress);
+        // Try to find existing progress
+        Optional<UserBossProgress> existingProgress = userBossProgressRepository
+                .findByUserIdAndBossId(userId, bossId);
+
+        if (existingProgress.isPresent())
+        {
+            // If progress exists, reset it
+            UserBossProgress progress = existingProgress.get();
+            progress.setCurrentHealth(maxHealth);
+            progress.setDefeated(false);
+            progress.setLastUpdated(LocalDateTime.now());
+            return userBossProgressRepository.save(progress);
+        } else
+        {
+            // If no progress exists, create new
+            UserBossProgress newProgress = new UserBossProgress(userId, bossId, maxHealth);
+            return userBossProgressRepository.save(newProgress);
+        }
     }
+
 
     public BossResponse dealDamage(String userId, int damage)
     {
@@ -92,7 +114,7 @@ public class BossService
 
     }
 
-    public List<Boss> getBossSelection(int userLevel)
+    public List<Boss> getBossSelection()
     {
         return bossRepository.findRandomBosses(4);
     }

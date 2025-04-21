@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Modal,
     ModalDialog,
@@ -14,7 +14,8 @@ import {
 } from '@mui/joy';
 import {Boss, selectBoss} from '../../api/BossesAPI';
 
-interface BossSelectionModalProps {
+interface BossSelectionModalProps
+{
     open: boolean;
     onClose: () => void;
     bosses: Boss[];
@@ -23,21 +24,22 @@ interface BossSelectionModalProps {
     requireSelection: boolean;
 }
 
-const BossSelectionModal: React.FC<BossSelectionModalProps> = ({
-                                                                   open,
-                                                                   onClose,
-                                                                   bosses,
-                                                                   onBossSelected,
-                                                                   loading,
-                                                                   requireSelection = false,
-                                                               }) => {
-    const handleSelectBoss = async (boss: Boss) => {
-        try {
+const BossSelectionModal: React.FC<BossSelectionModalProps> = ({open, onClose, bosses, onBossSelected, loading, requireSelection = false,}) =>
+{
+    const [error, setError] = useState<string | null>(null);
+
+    const handleSelectBoss = async (boss: Boss) =>
+    {
+        try
+        {
+            setError(null);
             await selectBoss(boss.id);
             onBossSelected(boss);
             // Remove the onClose calls from here as they'll be handled by the parent
-        } catch (error) {
+        } catch (error)
+        {
             console.error('Failed to select boss:', error);
+            setError('Failed to select boss. Please try again.');
         }
     };
 
@@ -60,12 +62,22 @@ const BossSelectionModal: React.FC<BossSelectionModalProps> = ({
                     You must select a boss to continue your journey
                 </Typography>
 
+                {error && (
+                    <Typography
+                        level="body-md"
+                        color="danger"
+                        sx={{ mt: 2, textAlign: 'center' }}
+                    >
+                        {error}
+                    </Typography>
+                )}
+
                 {loading ? (
                     <Box display="flex" justifyContent="center">
-                        <CircularProgress />
+                        <CircularProgress/>
                     </Box>
                 ) : (
-                    <Grid container spacing={2} sx={{ flexGrow: 1 }}>
+                    <Grid container spacing={2} sx={{flexGrow: 1}}>
                         {bosses.map((boss) => (
                             <Grid xs={12} sm={6} md={3} key={boss.id}>
                                 <Card variant="outlined">

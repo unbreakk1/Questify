@@ -24,8 +24,11 @@ import HabitCard from "../components/habits/HabitCard";
 import {getAllTasks, completeTask, deleteTask, Task} from "../api/TasksAPI";
 import {getAllHabits, completeHabit, deleteHabit, Habit} from "../api/HabitsAPI";
 import {getActiveBoss, attackBoss, BossResponse, getBossSelection, Boss} from "../api/BossesAPI";
-import BossCard from "../components/bosses/BossCard.tsx";
 import BossSelectionModal from '../components/bosses/BossSelectionModal';
+import AttackAnimation from '../components/animations/AttackAnimation';
+import RewardAnimation from '../components/animations/RewardAnimation';
+import AnimatedBossCard from '../components/bosses/AnimatedBossCard';
+
 
 interface UserStatsUpdate
 {
@@ -40,7 +43,7 @@ const Header: React.FC<{
     loading: boolean;
     onUserClick: () => void;
     onLogout: () => void;
-}> = ({ userStats, loading, onUserClick, onLogout }) => (
+}> = ({userStats, loading, onUserClick, onLogout}) => (
     <Sheet
         component="header"
         variant="solid"
@@ -63,7 +66,7 @@ const Header: React.FC<{
 
         <Box display="flex" alignItems="center" gap={2}>
             {loading ? (
-                <CircularProgress size="sm" />
+                <CircularProgress size="sm"/>
             ) : userStats ? (
                 <Stack direction="row" spacing={2} alignItems="center">
                     <Typography
@@ -104,7 +107,7 @@ const ContentSection: React.FC<{
     title: string;
     onAdd: () => void;
     children: React.ReactNode;
-}> = ({ title, onAdd, children }) => (
+}> = ({title, onAdd, children}) => (
     <Sheet
         variant="outlined"
         sx={{
@@ -129,43 +132,13 @@ const ContentSection: React.FC<{
                     onClick={onAdd}
                     size="sm"
                 >
-                    <AddIcon />
+                    <AddIcon/>
                 </IconButton>
             </Box>
             <Stack spacing={1}>
                 {children}
             </Stack>
         </Stack>
-    </Sheet>
-);
-
-// Boss Section Component
-const BossSection: React.FC<{
-    boss: BossResponse | null;
-    loading: boolean;
-}> = ({ boss, loading }) => (
-    <Sheet
-        variant="outlined"
-        sx={{
-            p: 2,
-            borderRadius: 'md',
-            background: 'var(--joy-palette-background-level1)',
-            width: '100%',
-            mb: 2,
-        }}
-    >
-        <Typography level="h4" mb={2}>
-            Active Boss
-        </Typography>
-        {loading ? (
-            <CircularProgress />
-        ) : boss ? (
-            <BossCard boss={boss} />
-        ) : (
-            <Typography level="body-md">
-                No active boss! Complete tasks or habits to summon one!
-            </Typography>
-        )}
     </Sheet>
 );
 
@@ -183,6 +156,12 @@ const DashboardPage: React.FC = () =>
     const [availableBosses, setAvailableBosses] = useState<Boss[]>([]);
     const [loadingBossSelection, setLoadingBossSelection] = useState(false);
     const [stompClient, setStompClient] = useState<Client | null>(null);
+    const [showAttackAnimation, setShowAttackAnimation] = useState(false);
+    const [rewardAnimation, setRewardAnimation] = useState<{
+        gold?: number;
+        xp?: number;
+        levelUp?: boolean;
+    } | null>(null);
 
 
     useEffect(() =>
@@ -203,11 +182,23 @@ const DashboardPage: React.FC = () =>
                         client.subscribe(`/topic/user-stats/${username}`, (message) =>
                         {
                             const update: UserStatsUpdate = JSON.parse(message.body);
-                            setUserStats(prevStats => ({
-                                ...prevStats!,
-                                gold: update.gold,
-                                level: update.level
-                            }));
+                            setUserStats(prevStats =>
+                            {
+                                const isLevelUp = prevStats && update.level > prevStats.level;
+                                if (isLevelUp)
+                                {
+                                    setRewardAnimation({
+                                        gold: update.gold - (prevStats?.gold || 0),
+                                        xp: 100, // Assuming XP gain, adjust as needed
+                                        levelUp: true
+                                    });
+                                }
+                                return {
+                                    ...prevStats!,
+                                    gold: update.gold,
+                                    level: update.level
+                                };
+                            });
                         });
                     }
                 },
@@ -305,28 +296,39 @@ const DashboardPage: React.FC = () =>
     };
 
     const handleCompleteTask = async (taskId: string) =>
-    {
-        try
         {
-            await completeTask(taskId);
-            const updatedTasks = await getAllTasks();
-            setTasks(updatedTasks);
-
-            if (boss)
+            try
             {
-                const updatedBoss = await attackBoss(500); // Example: Completing task deals 10 damage
-                setBoss(updatedBoss);
+                await completeTask(taskId);
+                const updatedTasks = await getAllTasks();
+                setTasks(updatedTasks);
 
-                if (updatedBoss.currentHealth === 0)
+                setRewardAnimation({
+                    gold: 50,
+                    xp: 25
+                });
+
+                if (boss)
                 {
-                    await handleBossDefeat();
+                    setShowAttackAnimation(true);
+                    const updatedBoss = await attackBoss(500);
+                    setBoss(updatedBoss);
+
+                    if (updatedBoss.currentHealth === 0)
+                    {
+                        setTimeout(() =>
+                        {
+                            handleBossDefeat();
+                        }, 1000);
+                    }
                 }
+            } catch
+                (error)
+            {
+                console.error("Failed to complete task or process boss damage:", error);
             }
-        } catch (error)
-        {
-            console.error("Failed to complete task or process boss damage:", error);
         }
-    };
+    ;
 
     const handleDeleteTask = async (taskId: string) =>
     {
@@ -343,8 +345,14 @@ const DashboardPage: React.FC = () =>
             setHabits(updatedHabits);
             if (boss)
             {
+                setShowAttackAnimation(true);
                 const updatedBossResponse = await attackBoss(750); // Example: Completing habit deals 5 damage
                 setBoss(updatedBossResponse);
+
+                setRewardAnimation({
+                    gold: 75,
+                    xp: 35
+                });
 
                 if (updatedBossResponse.currentHealth === 0)
                 {
@@ -375,8 +383,8 @@ const DashboardPage: React.FC = () =>
     };
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-            <CssBaseline />
+        <Box sx={{display: 'flex', flexDirection: 'column', minHeight: '100vh'}}>
+            <CssBaseline/>
             <GlobalStyles
                 styles={{
                     ':root': {
@@ -403,10 +411,36 @@ const DashboardPage: React.FC = () =>
                     width: '100%',
                     boxSizing: 'border-box',
                     minHeight: 'calc(100vh - var(--Header-height))',
+                    position: 'relative',
+                    overflow: 'hidden',
                 }}
             >
-                <BossSection boss={boss} loading={loadingBoss} />
+                {/* Boss Section with AnimatedBossCard */}
+                <Sheet
+                    variant="outlined"
+                    sx={{
+                        p: 2,
+                        borderRadius: 'md',
+                        background: 'var(--joy-palette-background-level1)',
+                        width: '100%',
+                        mb: 2,
+                    }}
+                >
+                    <Typography level="h4" mb={2}>
+                        Active Boss
+                    </Typography>
+                    {loadingBoss ? (
+                        <CircularProgress/>
+                    ) : boss ? (
+                        <AnimatedBossCard boss={boss}/>
+                    ) : (
+                        <Typography level="body-md">
+                            No active boss! Complete tasks or habits to summon one!
+                        </Typography>
+                    )}
+                </Sheet>
 
+                {/* Tasks and Habits Section */}
                 <Box
                     sx={{
                         display: 'flex',
@@ -438,7 +472,8 @@ const DashboardPage: React.FC = () =>
                                 habit={habit}
                                 onComplete={handleCompleteHabit}
                                 onDelete={handleDeleteHabit}
-                                onReset={async (habitId) => {
+                                onReset={async (habitId) =>
+                                {
                                     await completeHabit(habitId);
                                     const updatedHabits = await getAllHabits();
                                     setHabits(updatedHabits);
@@ -460,12 +495,15 @@ const DashboardPage: React.FC = () =>
                 open={showBossSelection}
                 onClose={() => setShowBossSelection(false)}
                 bosses={availableBosses}
-                onBossSelected={async () => {
-                    try {
+                onBossSelected={async () =>
+                {
+                    try
+                    {
                         const refreshedBoss = await getActiveBoss();
                         setBoss(refreshedBoss);
                         setShowBossSelection(false);
-                    } catch (error) {
+                    } catch (error)
+                    {
                         console.error('Failed to get active boss:', error);
                     }
                 }}
@@ -492,7 +530,8 @@ const DashboardPage: React.FC = () =>
                 >
                     {openModal === "task" ? (
                         <TaskForm
-                            onTaskCreated={async () => {
+                            onTaskCreated={async () =>
+                            {
                                 const updatedTasks = await getAllTasks();
                                 setTasks(updatedTasks);
                                 setOpenModal(null);
@@ -500,7 +539,8 @@ const DashboardPage: React.FC = () =>
                         />
                     ) : (
                         <HabitForm
-                            onHabitCreated={async () => {
+                            onHabitCreated={async () =>
+                            {
                                 const updatedHabits = await getAllHabits();
                                 setHabits(updatedHabits);
                                 setOpenModal(null);
@@ -509,6 +549,17 @@ const DashboardPage: React.FC = () =>
                     )}
                 </Sheet>
             </Modal>
+
+            {/* Animation Components */}
+            <AttackAnimation
+                isVisible={showAttackAnimation}
+                onComplete={() => setShowAttackAnimation(false)}
+            />
+
+            <RewardAnimation
+                {...rewardAnimation}
+                onComplete={() => setRewardAnimation(null)}
+            />
         </Box>
     );
 };
