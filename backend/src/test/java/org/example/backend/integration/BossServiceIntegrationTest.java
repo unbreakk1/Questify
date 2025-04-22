@@ -16,7 +16,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -152,4 +156,66 @@ class BossServiceIntegrationTest
                 .orElseThrow();
         assertEquals(testBoss.getMaxHealth(), progress.getCurrentHealth());
     }
+
+    @Test
+    void dealDamage_ConcurrentDamage() throws InterruptedException
+    {
+        final int numberOfThreads = 5;
+        final int damagePerThread = 25; // Total damage: 5 * 25 = 125, more than boss health (100)
+        final CountDownLatch latch = new CountDownLatch(numberOfThreads);
+        final AtomicBoolean bossDefeatedOnce = new AtomicBoolean(false);
+        final AtomicInteger rewardCount = new AtomicInteger(0);
+
+        // Create and start threads
+        List<Thread> threads = new ArrayList<>();
+        for (int i = 0; i < numberOfThreads; i++)
+        {
+            Thread t = new Thread(() ->
+            {
+                try
+                {
+                    latch.countDown();
+                    latch.await(); // Wait for all threads to be ready
+                    BossResponse response = bossService.dealDamage(testUser.getId(), damagePerThread);
+
+                    if (response.isDefeated())
+                    {
+                        if (!bossDefeatedOnce.compareAndSet(false, true))
+                        {
+                            fail("Boss was defeated more than once!");
+                        }
+                        rewardCount.incrementAndGet();
+                    }
+                }
+                catch (InterruptedException e)
+                {
+                    Thread.currentThread().interrupt();
+                    fail("Thread interrupted");
+                }
+            });
+            threads.add(t);
+            t.start();
+        }
+
+        // Wait for all threads to complete
+        for (Thread t : threads)
+        {
+            t.join();
+        }
+
+        // Verify final state
+        UserBossProgress finalProgress = userBossProgressRepository
+                .findByUserIdAndBossId(testUser.getId(), testBoss.getId())
+                .orElseThrow();
+
+        User updatedUser = userRepository.findById(testUser.getId()).orElseThrow();
+
+        // Assert
+        assertEquals(0, finalProgress.getCurrentHealth());
+        assertTrue(finalProgress.isDefeated());
+        assertEquals(1, rewardCount.get()); // Rewards should be given exactly once
+        assertEquals(testBoss.getRewards().getGold(), updatedUser.getGold()); // Rewards should be given exactly once
+        assertTrue(updatedUser.getBadges().contains(testBoss.getRewards().getBadge()));
+    }
+
 }
