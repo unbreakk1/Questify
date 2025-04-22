@@ -1,5 +1,5 @@
 import React from "react";
-import { Typography, Button, Box } from "@mui/joy";
+import {Typography, Box, IconButton} from "@mui/joy";
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
 
@@ -73,29 +73,26 @@ const TaskCard: React.FC<Task> = ({ id, title, dueDate, completed, onComplete, o
             </Box>
 
             <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button
+                <IconButton
                     size="sm"
                     color={completed ? "success" : "primary"}
                     variant={completed ? "soft" : "solid"}
                     onClick={() => onComplete(id)}
                     disabled={completed}
-                    startDecorator={<CheckCircleRoundedIcon />}
                     sx={{
-                        minWidth: '100px',
                         transform: 'translateZ(0)',
                         '&:hover': {
                             transform: completed ? 'none' : 'translateY(-2px)',
                         }
                     }}
                 >
-                    {completed ? "Done!" : "Complete"}
-                </Button>
-                <Button
+                    <CheckCircleRoundedIcon/>
+                </IconButton>
+                <IconButton
                     size="sm"
                     color="danger"
                     variant="soft"
                     onClick={() => onDelete(id)}
-                    startDecorator={<DeleteRoundedIcon />}
                     sx={{
                         transform: 'translateZ(0)',
                         '&:hover': {
@@ -103,8 +100,8 @@ const TaskCard: React.FC<Task> = ({ id, title, dueDate, completed, onComplete, o
                         }
                     }}
                 >
-                    Delete
-                </Button>
+                    <DeleteRoundedIcon/>
+                </IconButton>
             </Box>
         </Box>
     );

@@ -64,29 +64,36 @@ public class HabitService
             throw new IllegalArgumentException("Habit does not belong to the user");
         }
 
-        String today = LocalDate.now().toString();
-        if (today.equals(habit.getLastCompletedDate()))
+        LocalDate today = LocalDate.now();
+        String lastCompletedDate = habit.getLastCompletedDate();
+
+        if (today.toString().equals(lastCompletedDate))
         {
             throw new IllegalArgumentException("Habit has already been completed today");
         }
 
-        habit.setCompleted(true);
-        habit.setLastCompletedDate(today);
-
-        // Update streak logic
-        LocalDate lastCompletedDate = habit.getLastCompletedDate() == null
-                ? null : LocalDate.parse(habit.getLastCompletedDate());
-
-        if (lastCompletedDate != null && lastCompletedDate.plusDays(1).toString().equals(today))
+        // Check for streak continuation before updating the last completed date
+        if (lastCompletedDate != null)
         {
-            habit.setStreak(habit.getStreak() + 1);
+            LocalDate previousDate = LocalDate.parse(lastCompletedDate);
+            if (previousDate.plusDays(1).equals(today))
+            {
+                habit.setStreak(habit.getStreak() + 1);
+            } else
+            {
+                habit.setStreak(1);
+            }
         } else
         {
             habit.setStreak(1);
         }
 
+        habit.setCompleted(true);
+        habit.setLastCompletedDate(today.toString());
+
         return habitRepository.save(habit);
     }
+
 
     public Habit resetHabit(String userId, String habitId)
     {

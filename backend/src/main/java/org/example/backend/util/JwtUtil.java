@@ -1,21 +1,37 @@
 package org.example.backend.util;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+
 @Component
 public class JwtUtil
 {
+    private Key secretKey;
+    private static final int tokenValidity = 1000 * 60 * 60 * 10; // 10 hours
 
-    private final String SECRET_KEY_STRING = System.getenv("JWT_SECRET"); // Use ENV variable for production
-    private final Key SECRET_KEY = new SecretKeySpec(SECRET_KEY_STRING.getBytes(), SignatureAlgorithm.HS256.getJcaName());
-    private final int TOKEN_VALIDITY = 1000 * 60 * 60 * 10; // 10 hours
+    @Value("${JWT_SECRET:#{environment.JWT_SECRET}}")
+    private String secretKeyString;
+
+    @PostConstruct
+    public void init()
+    {
+        if (secretKeyString == null || secretKeyString.trim().isEmpty())
+        {
+            throw new IllegalStateException("JWT secret key is not configured");
+        }
+        this.secretKey = Keys.hmacShaKeyFor(secretKeyString.getBytes(StandardCharsets.UTF_8));
+    }
 
     public String generateToken(String username)
     {
@@ -26,11 +42,11 @@ public class JwtUtil
     private String createToken(Map<String, Object> claims, String subject)
     {
         return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(subject)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + TOKEN_VALIDITY))
-                .signWith(SECRET_KEY, SignatureAlgorithm.HS256)
+                .claims(claims)
+                .subject(subject)
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + tokenValidity))
+                .signWith(secretKey)
                 .compact();
     }
 
@@ -63,11 +79,19 @@ public class JwtUtil
 
     private Claims extractAllClaims(String token)
     {
-        return Jwts.parser()
-                .setSigningKey(SECRET_KEY)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        try
+        {
+            return Jwts.parser()
+                    .keyLocator(request -> secretKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        }
+        catch (io.jsonwebtoken.JwtException e)
+        {
+            throw new io.jsonwebtoken.JwtException("Invalid token");
+        }
+
     }
 
     @FunctionalInterface
