@@ -8,6 +8,9 @@ import org.example.backend.repository.BossRepository;
 import org.example.backend.repository.UserBossProgressRepository;
 import org.example.backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -78,7 +81,7 @@ public class BossService
         }
     }
 
-
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public BossResponse dealDamage(String userId, int damage)
     {
         User user = userService.getUserBasicDetails(userId);
@@ -92,27 +95,36 @@ public class BossService
         Boss boss = bossRepository.findById(currentBossId)
                 .orElseThrow(() -> new IllegalArgumentException("Boss not found"));
 
-        UserBossProgress progress = userBossProgressRepository
-                .findByUserIdAndBossId(userId, currentBossId)
-                .orElseGet(() -> initializeUserBossProgress(userId, currentBossId, boss.getMaxHealth()));
+        // optimistic locking
+        UserBossProgress progress;
+        synchronized (BossService.class) // Class-level lock
+        {
+            progress = userBossProgressRepository
+                    .findByUserIdAndBossId(userId, currentBossId)
+                    .orElseGet(() -> initializeUserBossProgress(userId, currentBossId, boss.getMaxHealth()));
 
-        // Deal damage logic
-        int newHealth = progress.getCurrentHealth() - damage;
-        if (newHealth <= 0)
-        {
-            progress.setCurrentHealth(0);
-            progress.setDefeated(true);
-            userBossProgressRepository.save(progress);
-            handleBossDefeat(boss, userId);
-        } else
-        {
-            progress.setCurrentHealth(newHealth);
-            userBossProgressRepository.save(progress);
+            if (progress.isDefeated())
+            {
+                return new BossResponse(boss, progress);
+            }
+
+            int newHealth = progress.getCurrentHealth() - damage;
+            if (newHealth <= 0 && !progress.isDefeated())
+            {
+                progress.setCurrentHealth(0);
+                progress.setDefeated(true);
+                progress = userBossProgressRepository.save(progress);
+                handleBossDefeat(boss, userId);
+            } else if (!progress.isDefeated())
+            {
+                progress.setCurrentHealth(Math.max(0, newHealth));
+                progress = userBossProgressRepository.save(progress);
+            }
         }
 
         return new BossResponse(boss, progress);
-
     }
+
 
     public List<Boss> getBossSelection()
     {
@@ -124,7 +136,8 @@ public class BossService
         return bossRepository.findById(bossId).isPresent();
     }
 
-    private void handleBossDefeat(Boss boss, String userId) {
+    private void handleBossDefeat(Boss boss, String userId)
+    {
         // Extract rewards from the boss
         int xpReward = boss.getRewards().getXp();
         int goldReward = boss.getRewards().getGold();
@@ -147,7 +160,8 @@ public class BossService
         updatedUser.setGold(updatedUser.getGold() + goldReward);
 
         // Add badge if not already owned
-        if (!updatedUser.hasBadge(badgeReward)) {
+        if (!updatedUser.hasBadge(badgeReward))
+        {
             updatedUser.addBadge(badgeReward);
         }
 
